@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // Auto-discovers every folder under src/components/ — each folder's .jsx file
 // (the component) and meta.js file (day/name/description/tags) are matched
@@ -69,8 +69,56 @@ function IndexGrid({ onSelect }) {
   )
 }
 
+function noteStorageKey(slug) {
+  return `component-lab:notes:${slug}`
+}
+
+function QuickNotes({ slug }) {
+  const [note, setNote] = useState('')
+  const [savedAt, setSavedAt] = useState(null)
+
+  useEffect(() => {
+    try {
+      setNote(localStorage.getItem(noteStorageKey(slug)) ?? '')
+    } catch {
+      setNote('')
+    }
+    setSavedAt(null)
+  }, [slug])
+
+  function handleChange(e) {
+    const value = e.target.value
+    setNote(value)
+    try {
+      localStorage.setItem(noteStorageKey(slug), value)
+      setSavedAt(new Date())
+    } catch {
+      // localStorage unavailable (private mode, disabled, etc.) — edits just won't persist.
+    }
+  }
+
+  return (
+    <div className="mt-8">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xs font-medium uppercase tracking-wide text-neutral-500">Quick Notes</h2>
+        {savedAt && <span className="text-xs text-neutral-600">Saved</span>}
+      </div>
+      <textarea
+        value={note}
+        onChange={handleChange}
+        placeholder="Scratch thoughts, todos, what you'll do next..."
+        rows={8}
+        className="mt-2 w-full resize-y rounded-lg border border-neutral-800 bg-neutral-900/40 p-3 text-sm text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-700 focus:outline-none"
+      />
+      <p className="mt-1.5 text-xs text-neutral-600">
+        Saved locally in this browser only — separate from notes.md.
+      </p>
+    </div>
+  )
+}
+
 function DetailView({ entry, onBack }) {
-  const { name, description, tags, component: ActiveComponent } = entry
+  const { slug, name, description, tags, component: ActiveComponent } = entry
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
@@ -91,6 +139,8 @@ function DetailView({ entry, onBack }) {
               <Tag key={tag}>{tag}</Tag>
             ))}
           </div>
+
+          <QuickNotes slug={slug} />
         </div>
 
         <div className="flex flex-1 items-center justify-center rounded-2xl border border-neutral-800 bg-neutral-900/30 p-10">
