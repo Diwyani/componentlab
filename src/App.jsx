@@ -1,11 +1,15 @@
 import { Fragment, useEffect, useState } from 'react'
+import ComponentShowcase from './components/showcase/ComponentShowcase.jsx'
 
 // Auto-discovers every folder under src/components/ — each folder's .jsx file
 // (the component) and meta.js file (day/name/description/tags) are matched
 // by folder slug. Add a new folder with both files and it shows up here
-// automatically, with zero edits to this file.
-const componentModules = import.meta.glob('./components/*/*.jsx', { eager: true })
-const metaModules = import.meta.glob('./components/*/meta.js', { eager: true })
+// automatically, with zero edits to this file. Scoped to numbered day folders
+// (001-toggle-switch, etc.) so shared helpers like components/showcase/ aren't
+// swept in as if they were a day's component.
+const componentModules = import.meta.glob('./components/[0-9]*/*.jsx', { eager: true })
+const sourceModules = import.meta.glob('./components/[0-9]*/*.jsx', { eager: true, query: '?raw', import: 'default' })
+const metaModules = import.meta.glob('./components/[0-9]*/meta.js', { eager: true })
 
 const entries = Object.keys(metaModules)
   .map((metaPath) => {
@@ -15,6 +19,7 @@ const entries = Object.keys(metaModules)
       slug,
       ...metaModules[metaPath].meta,
       component: componentPath ? componentModules[componentPath].default : null,
+      source: componentPath ? sourceModules[componentPath] : '',
     }
   })
   .sort((a, b) => a.day.localeCompare(b.day))
@@ -207,7 +212,7 @@ function QuickNotes({ slug }) {
 }
 
 function DetailView({ entry, onBack }) {
-  const { slug, name, description, tags, component: ActiveComponent } = entry
+  const { slug, name, description, tags, component: ActiveComponent, source } = entry
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
@@ -232,8 +237,14 @@ function DetailView({ entry, onBack }) {
           <QuickNotes slug={slug} />
         </div>
 
-        <div className="flex flex-1 items-center justify-center rounded-2xl border border-neutral-800 bg-neutral-900/30 p-10">
-          {ActiveComponent ? <ActiveComponent /> : <p className="text-sm text-neutral-500">Component not found.</p>}
+        <div className="flex-1">
+          {ActiveComponent ? (
+            <ComponentShowcase preview={<ActiveComponent />} code={source} language="jsx" />
+          ) : (
+            <div className="flex min-h-[200px] items-center justify-center rounded-2xl border border-neutral-800 bg-neutral-900/30 p-10">
+              <p className="text-sm text-neutral-500">Component not found.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
