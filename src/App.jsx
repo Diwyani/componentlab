@@ -1,5 +1,8 @@
 import { Fragment, useEffect, useState } from 'react'
+import { Link, Route, Routes, useParams } from 'react-router-dom'
 import ComponentShowcase from './components/showcase/ComponentShowcase.jsx'
+import LessonView from './components/lessons/LessonView.jsx'
+import { buildLessonList, hasLesson } from './lessons.js'
 
 // Auto-discovers every folder under src/components/ — each folder's .jsx file
 // (the component) and meta.js file (day/name/description/tags) are matched
@@ -90,7 +93,7 @@ const filters = [
   { label: 'Three.js', tag: 'three.js' },
 ]
 
-function IndexGrid({ onSelect }) {
+function IndexGrid() {
   const [activeFilter, setActiveFilter] = useState(filters[0].tag)
 
   const filteredEntries =
@@ -126,8 +129,8 @@ function IndexGrid({ onSelect }) {
               {index > 0 && index % 7 === 0 && (
                 <div className="col-span-full my-2 border-t border-neutral-800" />
               )}
-              <button
-                onClick={() => onSelect(slug)}
+              <Link
+                to={`/components/${slug}`}
                 className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-5 text-left transition-colors hover:border-neutral-700 hover:bg-neutral-900"
               >
                 <div className="flex items-center justify-between">
@@ -140,7 +143,7 @@ function IndexGrid({ onSelect }) {
                     <Tag key={tag}>{tag}</Tag>
                   ))}
                 </div>
-              </button>
+              </Link>
             </Fragment>
           ))}
         </div>
@@ -211,19 +214,19 @@ function QuickNotes({ slug }) {
   )
 }
 
-function DetailView({ entry, onBack }) {
+function DetailView({ entry }) {
   const { slug, name, description, tags, component: ActiveComponent, source } = entry
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-6 py-16 lg:flex-row">
         <div className="lg:w-72 lg:flex-none">
-          <button
-            onClick={onBack}
+          <Link
+            to="/"
             className="text-sm text-neutral-400 transition-colors hover:text-white"
           >
             ← Back
-          </button>
+          </Link>
 
           <h1 className="mt-6 text-lg font-semibold tracking-tight">{name}</h1>
           <p className="mt-3 text-sm leading-relaxed text-neutral-400">{description}</p>
@@ -233,6 +236,15 @@ function DetailView({ entry, onBack }) {
               <Tag key={tag}>{tag}</Tag>
             ))}
           </div>
+
+          {hasLesson(slug) && (
+            <Link
+              to={`/lessons/${slug}`}
+              className="mt-4 inline-flex items-center gap-1 text-sm text-neutral-300 underline decoration-neutral-700 underline-offset-2 hover:text-white"
+            >
+              View lesson breakdown →
+            </Link>
+          )}
 
           <QuickNotes slug={slug} />
         </div>
@@ -251,13 +263,35 @@ function DetailView({ entry, onBack }) {
   )
 }
 
-export default function App() {
-  const [activeSlug, setActiveSlug] = useState(null)
-  const activeEntry = entries.find((e) => e.slug === activeSlug)
+function DetailViewRoute() {
+  const { slug } = useParams()
+  const entry = entries.find((e) => e.slug === slug)
 
-  if (activeEntry) {
-    return <DetailView entry={activeEntry} onBack={() => setActiveSlug(null)} />
+  if (!entry) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-neutral-950 text-neutral-100">
+        <div className="text-center">
+          <p className="text-sm text-neutral-500">No component at this link.</p>
+          <Link to="/" className="mt-3 inline-block text-sm text-neutral-300 underline hover:text-white">
+            ← Back to Component Lab
+          </Link>
+        </div>
+      </div>
+    )
   }
 
-  return <IndexGrid onSelect={setActiveSlug} />
+  return <DetailView entry={entry} />
+}
+
+const lessonList = buildLessonList(entries)
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<IndexGrid />} />
+      <Route path="/components/:slug" element={<DetailViewRoute />} />
+      <Route path="/lessons" element={<LessonView lessonList={lessonList} />} />
+      <Route path="/lessons/:slug" element={<LessonView lessonList={lessonList} />} />
+    </Routes>
+  )
 }
