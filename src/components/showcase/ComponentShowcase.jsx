@@ -2,14 +2,29 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy, Check } from "lucide-react";
 
+const tabOrder = ["preview", "code"];
 const tabs = [
   { value: "preview", label: "Preview" },
   { value: "code", label: "Code" },
 ];
 
+const slideVariants = {
+  enter: (direction) => ({ x: direction > 0 ? 24 : -24, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (direction) => ({ x: direction > 0 ? -24 : 24, opacity: 0 }),
+};
+
 export default function ComponentShowcase({ preview, code, language = "jsx" }) {
   const [tab, setTab] = useState("preview");
+  const [direction, setDirection] = useState(0);
   const [copied, setCopied] = useState(false);
+
+  function handleTabChange(nextTab) {
+    const nextIndex = tabOrder.indexOf(nextTab);
+    const currentIndex = tabOrder.indexOf(tab);
+    setDirection(nextIndex > currentIndex ? 1 : -1);
+    setTab(nextTab);
+  }
 
   async function handleCopy() {
     try {
@@ -29,7 +44,7 @@ export default function ComponentShowcase({ preview, code, language = "jsx" }) {
           return (
             <button
               key={t.value}
-              onClick={() => setTab(t.value)}
+              onClick={() => handleTabChange(t.value)}
               className={`-mb-px rounded-t-lg border px-4 py-2 text-sm font-medium transition-colors ${
                 isActive
                   ? "border-neutral-800 border-b-transparent bg-neutral-900/30 text-neutral-100"
@@ -42,19 +57,17 @@ export default function ComponentShowcase({ preview, code, language = "jsx" }) {
         })}
       </div>
 
-      <motion.div
-        layout
-        transition={{ duration: 0.3, ease: "easeOut" }}
-        className="overflow-hidden rounded-b-xl rounded-tr-xl border border-neutral-800 bg-neutral-900/30"
-      >
-        <AnimatePresence mode="popLayout" initial={false}>
+      <div className="relative overflow-hidden rounded-b-xl rounded-tr-xl border border-neutral-800 bg-neutral-900/30">
+        <AnimatePresence mode="popLayout" initial={false} custom={direction}>
           {tab === "preview" ? (
             <motion.div
               key="preview"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.2, ease: "easeOut" }}
               className="flex min-h-[200px] items-center justify-center p-10"
             >
               {preview}
@@ -62,10 +75,12 @@ export default function ComponentShowcase({ preview, code, language = "jsx" }) {
           ) : (
             <motion.div
               key="code"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.2, ease: "easeOut" }}
               className="relative min-h-[200px] overflow-auto p-4"
             >
               <button
@@ -81,7 +96,7 @@ export default function ComponentShowcase({ preview, code, language = "jsx" }) {
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
+      </div>
     </div>
   );
 }
