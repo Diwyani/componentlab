@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
 
 const card = {
   id: "notes-card",
@@ -39,24 +40,25 @@ export default function CardExpandDetail() {
             />
 
             <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-              <motion.div layoutId={card.id} className="w-80 rounded-xl bg-neutral-800 p-6 text-left">
-                <motion.h3 layoutId={`${card.id}-title`} className="text-base font-medium text-white">
+              <motion.div layoutId={card.id} className="relative w-80 rounded-xl bg-yellow-400 p-6 text-left">
+                <button
+                  onClick={() => setIsExpanded(false)}
+                  aria-label="Close"
+                  className="absolute right-4 top-4 rounded-full p-1 text-neutral-900/60 transition-colors hover:bg-black/10 hover:text-neutral-900"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <motion.h3 layoutId={`${card.id}-title`} className="text-base font-medium text-neutral-900">
                   {card.title}
                 </motion.h3>
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.15 }}
-                  className="mt-3 text-sm leading-relaxed text-neutral-400"
+                  className="mt-3 pr-6 text-sm leading-relaxed text-neutral-800"
                 >
                   {card.detail}
                 </motion.p>
-                <button
-                  onClick={() => setIsExpanded(false)}
-                  className="mt-5 rounded-lg bg-neutral-700 px-3 py-1.5 text-xs text-neutral-200"
-                >
-                  Close
-                </button>
               </motion.div>
             </div>
           </>

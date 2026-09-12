@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy, Check } from "lucide-react";
-import { Segmented } from "../013-segmented-control/SegmentedControl.jsx";
 
 const tabs = [
   { value: "preview", label: "Preview" },
@@ -24,42 +23,65 @@ export default function ComponentShowcase({ preview, code, language = "jsx" }) {
 
   return (
     <div className="w-full">
-      <Segmented options={tabs} value={tab} onChange={setTab} />
-
-      <AnimatePresence initial={false}>
-        {tab === "preview" ? (
-          <motion.div
-            key="preview"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.15 }}
-            className="mt-4 flex min-h-[200px] items-center justify-center rounded-2xl border border-neutral-800 bg-neutral-900/30 p-10"
-          >
-            {preview}
-          </motion.div>
-        ) : (
-          <motion.div
-            key="code"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.15 }}
-            className="relative mt-4 min-h-[200px] overflow-auto rounded-2xl border border-neutral-800 bg-neutral-900/30 p-4"
-          >
+      <div className="flex">
+        {tabs.map((t) => {
+          const isActive = tab === t.value;
+          return (
             <button
-              onClick={handleCopy}
-              aria-label="Copy code"
-              className="absolute right-3 top-3 rounded-md border border-neutral-800 bg-neutral-900 p-1.5 text-neutral-400 transition-colors hover:text-neutral-100"
+              key={t.value}
+              onClick={() => setTab(t.value)}
+              className={`-mb-px rounded-t-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                isActive
+                  ? "border-neutral-800 border-b-transparent bg-neutral-900/30 text-neutral-100"
+                  : "border-transparent text-neutral-500 hover:text-neutral-300"
+              }`}
             >
-              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              {t.label}
             </button>
-            <pre className="pr-8 text-xs leading-relaxed text-neutral-300">
-              <code data-language={language}>{code}</code>
-            </pre>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          );
+        })}
+      </div>
+
+      <motion.div
+        layout
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="overflow-hidden rounded-b-xl rounded-tr-xl border border-neutral-800 bg-neutral-900/30"
+      >
+        <AnimatePresence mode="popLayout" initial={false}>
+          {tab === "preview" ? (
+            <motion.div
+              key="preview"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="flex min-h-[200px] items-center justify-center p-10"
+            >
+              {preview}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="code"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="relative min-h-[200px] overflow-auto p-4"
+            >
+              <button
+                onClick={handleCopy}
+                aria-label="Copy code"
+                className="absolute right-3 top-3 rounded-md border border-neutral-800 bg-neutral-900 p-1.5 text-neutral-400 transition-colors hover:text-neutral-100"
+              >
+                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              </button>
+              <pre className="pr-8 text-xs leading-relaxed text-neutral-300">
+                <code data-language={language}>{code}</code>
+              </pre>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 }
