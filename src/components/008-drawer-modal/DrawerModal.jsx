@@ -37,7 +37,7 @@ export default function DrawerModal() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black"
+        className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
       >
         Open Drawer
       </button>

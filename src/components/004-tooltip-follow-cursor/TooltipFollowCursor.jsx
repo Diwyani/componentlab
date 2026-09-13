@@ -19,7 +19,7 @@ export default function CursorTooltip() {
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       onMouseMove={handleMouseMove}
-      className="relative w-72 h-40 flex items-center justify-center rounded-xl bg-neutral-800 text-neutral-400 text-sm cursor-none"
+      className="relative w-72 h-40 flex items-center justify-center rounded-xl bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400 text-sm cursor-none"
     >
       Hover over this box
 

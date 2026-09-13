@@ -19,12 +19,12 @@ export default function CardExpandDetail() {
         <motion.button
           layoutId={card.id}
           onClick={() => setIsExpanded(true)}
-          className="w-full rounded-xl bg-neutral-800 p-5 text-left"
+          className="w-full rounded-xl bg-neutral-100 p-5 text-left dark:bg-neutral-800"
         >
-          <motion.h3 layoutId={`${card.id}-title`} className="text-sm font-medium text-white">
+          <motion.h3 layoutId={`${card.id}-title`} className="text-sm font-medium text-neutral-900 dark:text-white">
             {card.title}
           </motion.h3>
-          <p className="mt-1 text-sm text-neutral-400">{card.summary}</p>
+          <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">{card.summary}</p>
         </motion.button>
       )}
 

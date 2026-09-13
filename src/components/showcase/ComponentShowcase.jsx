@@ -37,7 +37,7 @@ export default function ComponentShowcase({ preview, code, language = "jsx" }) {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full min-w-0">
       <div className="flex">
         {tabs.map((t) => {
           const isActive = tab === t.value;
@@ -47,8 +47,8 @@ export default function ComponentShowcase({ preview, code, language = "jsx" }) {
               onClick={() => handleTabChange(t.value)}
               className={`-mb-px rounded-t-lg border px-4 py-2 text-sm font-medium transition-colors ${
                 isActive
-                  ? "border-neutral-800 border-b-transparent bg-neutral-900/30 text-neutral-100"
-                  : "border-transparent text-neutral-500 hover:text-neutral-300"
+                  ? "border-neutral-200 border-b-transparent bg-neutral-50 text-neutral-900 dark:border-neutral-800 dark:bg-neutral-900/30 dark:text-neutral-100"
+                  : "border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
               }`}
             >
               {t.label}
@@ -57,7 +57,7 @@ export default function ComponentShowcase({ preview, code, language = "jsx" }) {
         })}
       </div>
 
-      <div className="relative overflow-hidden rounded-b-xl rounded-tr-xl border border-neutral-800 bg-neutral-900/30">
+      <div className="relative overflow-hidden rounded-b-xl rounded-tr-xl border border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900/30">
         <AnimatePresence mode="popLayout" initial={false} custom={direction}>
           {tab === "preview" ? (
             <motion.div
@@ -86,11 +86,11 @@ export default function ComponentShowcase({ preview, code, language = "jsx" }) {
               <button
                 onClick={handleCopy}
                 aria-label="Copy code"
-                className="absolute right-3 top-3 rounded-md border border-neutral-800 bg-neutral-900 p-1.5 text-neutral-400 transition-colors hover:text-neutral-100"
+                className="absolute right-3 top-3 rounded-md border border-neutral-200 bg-white p-1.5 text-neutral-500 transition-colors hover:text-neutral-900 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
               >
                 {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
               </button>
-              <pre className="pr-8 text-xs leading-relaxed text-neutral-300">
+              <pre className="pr-8 text-xs leading-relaxed text-neutral-700 dark:text-neutral-300">
                 <code data-language={language}>{code}</code>
               </pre>
             </motion.div>

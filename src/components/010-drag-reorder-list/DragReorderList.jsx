@@ -18,7 +18,7 @@ export default function DragReorderList() {
           key={item}
           value={item}
           whileDrag={{ scale: 1.03, boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
-          className="cursor-grab rounded-lg bg-neutral-800 px-4 py-3 text-sm text-neutral-200 active:cursor-grabbing"
+          className="cursor-grab rounded-lg bg-neutral-100 px-4 py-3 text-sm text-neutral-700 active:cursor-grabbing dark:bg-neutral-800 dark:text-neutral-200"
         >
           {item}
         </Reorder.Item>

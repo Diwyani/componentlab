@@ -15,10 +15,10 @@ export default function Accordion() {
       {faqs.map((faq, index) => {
         const isOpen = openIndex === index;
         return (
-          <div key={faq.question} className="rounded-lg bg-neutral-800 overflow-hidden">
+          <div key={faq.question} className="rounded-lg bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
             <button
               onClick={() => setOpenIndex(isOpen ? null : index)}
-              className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-white text-left"
+              className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-neutral-900 dark:text-white text-left"
             >
               {faq.question}
               <motion.span
@@ -37,7 +37,7 @@ export default function Accordion() {
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.25, ease: "easeInOut" }}
                 >
-                  <p className="px-4 pb-3 text-sm text-neutral-400">{faq.answer}</p>
+                  <p className="px-4 pb-3 text-sm text-neutral-600 dark:text-neutral-400">{faq.answer}</p>
                 </motion.div>
               )}
             </AnimatePresence>

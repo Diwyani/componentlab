@@ -18,7 +18,7 @@ export default function ToastDemo() {
     <div className="flex flex-col items-center gap-6">
       <button
         onClick={addToast}
-        className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black"
+        className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
       >
         Trigger Toast
       </button>
@@ -33,7 +33,7 @@ export default function ToastDemo() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, x: 100, scale: 0.9 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
-              className="rounded-lg bg-neutral-800 px-4 py-3 text-sm text-white shadow-lg"
+              className="rounded-lg bg-neutral-100 px-4 py-3 text-sm text-neutral-900 shadow-lg dark:bg-neutral-800 dark:text-white"
             >
               {toast.message}
             </motion.div>

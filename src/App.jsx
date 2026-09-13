@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState } from 'react'
 import { Link, Route, Routes, useParams } from 'react-router-dom'
 import ComponentShowcase from './components/showcase/ComponentShowcase.jsx'
 import LessonView from './components/lessons/LessonView.jsx'
+import ThemeToggle from './components/theme/ThemeToggle.jsx'
 import { buildLessonList, hasLesson } from './lessons.js'
 
 // Auto-discovers every folder under src/components/ — each folder's .jsx file
@@ -29,7 +30,9 @@ const entries = Object.keys(metaModules)
 
 function Tag({ children }) {
   return (
-    <span className="rounded-md bg-neutral-900 px-2.5 py-1 text-xs text-neutral-400">{children}</span>
+    <span className="rounded-md bg-neutral-100 px-2.5 py-1 text-xs text-neutral-600 dark:bg-neutral-900 dark:text-neutral-400">
+      {children}
+    </span>
   )
 }
 
@@ -77,7 +80,7 @@ function SocialLinks() {
           aria-label={label}
           target={external ? '_blank' : undefined}
           rel={external ? 'noopener noreferrer' : undefined}
-          className="text-neutral-400 transition-colors hover:text-neutral-100"
+          className="text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
         >
           {icon}
         </a>
@@ -100,10 +103,10 @@ function IndexGrid() {
     activeFilter === null ? entries : entries.filter((e) => e.tags.some((t) => t.toLowerCase() === activeFilter))
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100">
+    <div className="min-h-screen bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
       <div className="mx-auto max-w-4xl px-6 py-16">
         <h1 className="text-2xl font-semibold tracking-tight">Component Lab</h1>
-        <p className="mt-2 text-sm text-neutral-400">
+        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
           Daily component practice — Framer Motion → GSAP → Three.js
         </p>
 
@@ -114,8 +117,8 @@ function IndexGrid() {
               onClick={() => setActiveFilter(filter.tag)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                 activeFilter === filter.tag
-                  ? 'bg-neutral-100 text-neutral-950'
-                  : 'bg-neutral-900 text-neutral-400 hover:text-neutral-200'
+                  ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-950'
+                  : 'bg-neutral-100 text-neutral-600 hover:text-neutral-900 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200'
               }`}
             >
               {filter.label}
@@ -127,17 +130,17 @@ function IndexGrid() {
           {filteredEntries.map(({ slug, day, name, description, tags }, index) => (
             <Fragment key={slug}>
               {index > 0 && index % 7 === 0 && (
-                <div className="col-span-full my-2 border-t border-neutral-800" />
+                <div className="col-span-full my-2 border-t border-neutral-200 dark:border-neutral-800" />
               )}
               <Link
                 to={`/components/${slug}`}
-                className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-5 text-left transition-colors hover:border-neutral-700 hover:bg-neutral-900"
+                className="rounded-xl border border-neutral-200 bg-neutral-50 p-5 text-left transition-colors hover:border-neutral-300 hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900/40 dark:hover:border-neutral-700 dark:hover:bg-neutral-900"
               >
                 <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-medium text-neutral-100">{name}</h2>
-                  <span className="font-mono text-xs text-[#3fb950]/60">{day}</span>
+                  <h2 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{name}</h2>
+                  <span className="font-mono text-xs text-[#3fb950]/80 dark:text-[#3fb950]/60">{day}</span>
                 </div>
-                <p className="mt-2 text-sm text-neutral-400">{description}</p>
+                <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">{description}</p>
                 <div className="mt-4 flex flex-wrap gap-1.5">
                   {tags.map((tag) => (
                     <Tag key={tag}>{tag}</Tag>
@@ -155,12 +158,14 @@ function IndexGrid() {
         )}
       </div>
 
-      <div className="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-full border border-neutral-800 bg-neutral-900/80 px-4 py-2 text-xs text-neutral-400 backdrop-blur">
+      <div className="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-full border border-neutral-200 bg-white/80 px-4 py-2 text-xs text-neutral-600 backdrop-blur dark:border-neutral-800 dark:bg-neutral-900/80 dark:text-neutral-400">
         <span>
           {filteredEntries.length} Component{filteredEntries.length === 1 ? '' : 's'}
         </span>
-        <span className="h-3.5 w-px bg-neutral-700" />
+        <span className="h-3.5 w-px bg-neutral-300 dark:bg-neutral-700" />
         <SocialLinks />
+        <span className="h-3.5 w-px bg-neutral-300 dark:bg-neutral-700" />
+        <ThemeToggle />
       </div>
     </div>
   )
@@ -198,16 +203,16 @@ function QuickNotes({ slug }) {
     <div className="mt-8">
       <div className="flex items-center justify-between">
         <h2 className="text-xs font-medium uppercase tracking-wide text-neutral-500">Quick Notes</h2>
-        {savedAt && <span className="text-xs text-neutral-600">Saved</span>}
+        {savedAt && <span className="text-xs text-neutral-500 dark:text-neutral-600">Saved</span>}
       </div>
       <textarea
         value={note}
         onChange={handleChange}
         placeholder="Scratch thoughts, todos, what you'll do next..."
         rows={8}
-        className="mt-2 w-full resize-y rounded-lg border border-neutral-800 bg-neutral-900/40 p-3 text-sm text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-700 focus:outline-none"
+        className="mt-2 w-full resize-y rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-neutral-300 focus:outline-none dark:border-neutral-800 dark:bg-neutral-900/40 dark:text-neutral-200 dark:placeholder:text-neutral-600 dark:focus:border-neutral-700"
       />
-      <p className="mt-1.5 text-xs text-neutral-600">
+      <p className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-600">
         Saved locally in this browser only — separate from notes.md.
       </p>
     </div>
@@ -218,18 +223,18 @@ function DetailView({ entry }) {
   const { slug, name, description, tags, component: ActiveComponent, source } = entry
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100">
+    <div className="min-h-screen bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-6 py-16 lg:flex-row">
         <div className="lg:w-72 lg:flex-none">
           <Link
             to="/"
-            className="text-sm text-neutral-400 transition-colors hover:text-white"
+            className="text-sm text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
           >
             ← Back
           </Link>
 
           <h1 className="mt-6 text-lg font-semibold tracking-tight">{name}</h1>
-          <p className="mt-3 text-sm leading-relaxed text-neutral-400">{description}</p>
+          <p className="mt-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{description}</p>
 
           <div className="mt-6 flex flex-wrap gap-1.5">
             {tags.map((tag) => (
@@ -240,7 +245,7 @@ function DetailView({ entry }) {
           {hasLesson(slug) && (
             <Link
               to={`/lessons/${slug}`}
-              className="mt-4 inline-flex items-center gap-1 text-sm text-neutral-300 underline decoration-neutral-700 underline-offset-2 hover:text-white"
+              className="mt-4 inline-flex items-center gap-1 text-sm text-neutral-700 underline decoration-neutral-300 underline-offset-2 hover:text-neutral-950 dark:text-neutral-300 dark:decoration-neutral-700 dark:hover:text-white"
             >
               View lesson breakdown →
             </Link>
@@ -249,11 +254,11 @@ function DetailView({ entry }) {
           <QuickNotes slug={slug} />
         </div>
 
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           {ActiveComponent ? (
             <ComponentShowcase preview={<ActiveComponent />} code={source} language="jsx" />
           ) : (
-            <div className="flex min-h-[200px] items-center justify-center rounded-2xl border border-neutral-800 bg-neutral-900/30 p-10">
+            <div className="flex min-h-[200px] items-center justify-center rounded-2xl border border-neutral-200 bg-neutral-50 p-10 dark:border-neutral-800 dark:bg-neutral-900/30">
               <p className="text-sm text-neutral-500">Component not found.</p>
             </div>
           )}
@@ -269,10 +274,13 @@ function DetailViewRoute() {
 
   if (!entry) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-neutral-950 text-neutral-100">
+      <div className="flex min-h-screen items-center justify-center bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
         <div className="text-center">
           <p className="text-sm text-neutral-500">No component at this link.</p>
-          <Link to="/" className="mt-3 inline-block text-sm text-neutral-300 underline hover:text-white">
+          <Link
+            to="/"
+            className="mt-3 inline-block text-sm text-neutral-700 underline hover:text-neutral-950 dark:text-neutral-300 dark:hover:text-white"
+          >
             ← Back to Component Lab
           </Link>
         </div>
