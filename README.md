@@ -18,17 +18,23 @@ Daily component practice — Framer Motion → GSAP → Three.js.
 | 012 | Progress Stepper | Framer Motion | [src/components/012-progress-stepper](src/components/012-progress-stepper) | [notes](src/components/012-progress-stepper/notes.md) |
 | 013 | Segmented Control | Framer Motion | [src/components/013-segmented-control](src/components/013-segmented-control) | [notes](src/components/013-segmented-control/notes.md) |
 | 014 | Card Expand Detail | Framer Motion | [src/components/014-card-expand-detail](src/components/014-card-expand-detail) | [notes](src/components/014-card-expand-detail/notes.md) |
+| 015 | Swipeable Card Stack | Framer Motion | [src/components/015-swipeable-card-stack](src/components/015-swipeable-card-stack) | [notes](src/components/015-swipeable-card-stack/notes.md) |
+| 016 | Pull To Refresh | Framer Motion | [src/components/016-pull-to-refresh](src/components/016-pull-to-refresh) | [notes](src/components/016-pull-to-refresh/notes.md) |
+| 017 | Draggable Bottom Sheet | Framer Motion | [src/components/017-draggable-bottom-sheet](src/components/017-draggable-bottom-sheet) | [notes](src/components/017-draggable-bottom-sheet/notes.md) |
+| 018 | Password Strength Meter | Framer Motion | [src/components/018-password-strength-meter](src/components/018-password-strength-meter) | [notes](src/components/018-password-strength-meter/notes.md) |
+| 019 | Copy To Clipboard | Framer Motion | [src/components/019-copy-to-clipboard](src/components/019-copy-to-clipboard) | [notes](src/components/019-copy-to-clipboard/notes.md) |
+| 020 | Rating Stars | Framer Motion | [src/components/020-rating-stars](src/components/020-rating-stars) | [notes](src/components/020-rating-stars/notes.md) |
 
 ## Adding a new day's component
 
 ```bash
-name=015-my-component
+name=021-my-component
 mkdir -p src/components/$name
 cp src/components/001-toggle-switch/notes.md src/components/$name/notes.md
 sed 's/ToggleSwitch/MyComponent/' src/components/001-toggle-switch/ToggleSwitch.jsx > src/components/$name/MyComponent.jsx
 cat > src/components/$name/meta.js <<'EOF'
 export const meta = {
-  day: '015',
+  day: '021',
   name: 'My Component',
   description: 'TODO: describe what this component does.',
   tags: ['react', 'tailwindcss', 'framer motion'],
