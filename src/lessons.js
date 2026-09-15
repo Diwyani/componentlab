@@ -46,3 +46,67 @@ export function buildLessonList(entries) {
     ...entries.map(({ slug, day, name }) => ({ slug, day, name })),
   ]
 }
+
+// Grouped by what you're learning, not build order — mirrors the "Index"
+// breakdown's own category structure. A category item is either a bare slug,
+// or { slug, label } when the same build is being revisited under a different
+// name for a different lesson (e.g. Drawer Modal shown again as "Modal" under
+// Component Architecture — same code, different concept being studied).
+const CATEGORY_DEFS = [
+  {
+    title: '01 — State & Rendering',
+    items: ['001-toggle-switch', '002-tab-switcher', '003-accordion-faq'],
+  },
+  {
+    title: '02 — Interaction',
+    items: [
+      '004-tooltip-follow-cursor',
+      '005-like-heart-button',
+      '007-toast-notification',
+      '020-rating-stars',
+      '018-password-strength-meter',
+    ],
+  },
+  {
+    title: '03 — Effects & Browser APIs',
+    items: ['006-skeleton-loader', '008-drawer-modal', '019-copy-to-clipboard'],
+  },
+  {
+    title: '04 — Data & Lists',
+    items: ['009-dropdown-menu', '010-drag-reorder-list', '011-image-gallery-layout'],
+  },
+  {
+    title: '05 — Layout & Motion',
+    items: [
+      '012-progress-stepper',
+      '013-segmented-control',
+      '014-card-expand-detail',
+      '015-swipeable-card-stack',
+      '017-draggable-bottom-sheet',
+      '016-pull-to-refresh',
+    ],
+  },
+  {
+    title: '06 — Component Architecture',
+    items: [
+      { slug: '008-drawer-modal', label: 'Modal' },
+      { slug: '009-dropdown-menu', label: 'Controlled Dropdown' },
+    ],
+  },
+]
+
+export function buildLessonCategories(entries) {
+  const bySlug = Object.fromEntries(entries.map((entry) => [entry.slug, entry]))
+
+  return CATEGORY_DEFS.map(({ title, items }) => ({
+    title,
+    items: items
+      .map((item) => {
+        const ref = typeof item === 'string' ? { slug: item } : item
+        const entry = bySlug[ref.slug]
+        if (!entry) return null
+        return { slug: entry.slug, day: entry.day, name: ref.label ?? entry.name }
+      })
+      .filter(Boolean),
+  }))
+}

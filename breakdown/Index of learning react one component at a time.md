@@ -41,38 +41,56 @@ The most basic things
 2. export default function functionname :
 
 
-**Week 1 — Framer Motion basics (state-driven UI)**
+Organized by **what you're learning**, not the order things were built in. The day number (001, 002, ...) still tells you the actual build sequence and matches the folder in `src/components/` — this grouping is just a different lens on the same components, for going back to study a concept rather than a specific day.
 
-1. ==[[Toggle Switch]] with spring animation==
-2. ==[[Tab switcher]] (like your Action Toolbar screenshot)==
-3. [[Accordion]] / expandable FAQ item
-4. [[Tooltip]] that follows cursor on hover
-5. [[Like Button]] with a little bounce + a spring pop (an earlier version had a particle burst — cut, see the file's own notes)
-6. [[Skeleton Loader]] → content swap
-7. [[Toast]] notification (enter/exit)
+---
 
-**Week 2 — Framer Motion, layout & lists**  
-8. [[Drawer Modal]] (slide up from bottom, like your FamilyDrawer)  
-9. [[Dropdown Menu]] with staggered item reveal  
-10. [[Drag Reorder]] list (todo list style)  
-11. [[Image gallery]] with shared layout transition (`layoutId`) — click thumbnail, it morphs into full view  
-12. ==[[Progress Stepper]] (multi-step form indicator)==  
-13. [[Segmented control]] (iOS-style pill switcher) — later became a reusable primitive, used elsewhere in the app  
-14. ==[[Card that expands]] into full detail view in place==
+### 01 — State & Rendering
 
+1. ==[[Toggle Switch]]== (001) — a boolean driving what's on screen
+2. ==[[Tab switcher]]== (002) — state as a value, not just true/false
+3. [[Accordion]] (003) — derived state (`isOpen` calculated, not stored, per item)
 
-## Upcoming 
+### 02 — Interaction
 
-**Week 3 — Framer Motion, gestures & feel**  
-15. Swipeable card stack (Tinder-style)  
-16. Pull-to-refresh  
-17. Draggable bottom sheet with snap points  
-18. Password strength meter with animated fill  
-19. Copy-to-clipboard button with checkmark morph  
-20. Rating stars with hover fill
+4. [[Tooltip]] (004) — responding to real-time browser events (mouse position)
+5. [[Like Button]] (005) — one boolean driving both appearance *and* animation replay
+6. [[Toast]] (007) — state as an array of independent, timed items
+7. Rating Stars (020) — hover-driven fill, *upcoming*
+8. Password Strength Meter (018) — live feedback as you type, *upcoming*
 
+### 03 — Effects & Browser APIs
 
-### Later
+9. [[Skeleton Loader]] (006) — `useEffect`, timers, cleanup
+10. [[Drawer Modal]] (008) — `useEffect` reaching outside React (scroll lock, keyboard listener)
+11. Copy To Clipboard (019) — the Clipboard API, *upcoming*
+
+### 04 — Data & Lists
+
+12. [[Dropdown Menu]] (009) — data → `.map()` → UI, staggered children
+13. [[Drag Reorder]] (010) — state that represents real data, not just UI condition
+14. [[Image gallery]] (011) — selected-ID pattern + shared layout transitions (`layoutId`)
+15. Search — filtering a list as you type, *upcoming*
+
+### 05 — Layout & Motion
+
+16. ==[[Progress Stepper]]== (012) — one piece of state driving many visual details
+17. [[Segmented control]] (013) — shared layout animation; later became a reusable primitive
+18. ==[[Card that expands]]== (014) — `layoutId` morphing between two different layouts
+19. Swipeable Card Stack (015) — drag gestures + exit direction
+20. Draggable Bottom Sheet (017) — drag with multiple snap points
+21. Pull To Refresh (016) — drag distance driving a threshold-triggered action
+
+### 06 — Component Architecture
+
+22. Modal *(same build as [[Drawer Modal]], 008 — revisited here for composition/reuse rather than its effects)*
+23. Controlled Dropdown *(same build as [[Dropdown Menu]], 009 — revisited here for the controlled-component pattern, the way `Segmented` was extracted from Segmented Control)*
+24. Forms — *upcoming*
+25. Async Data — *upcoming*
+
+---
+
+## Later (GSAP → Three.js, not yet categorized like the above)
 
 **Week 4 — GSAP (timeline, scroll)**  
 21. Scroll-triggered fade/slide-in sections  

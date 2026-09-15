@@ -3,7 +3,7 @@ import { Link, Route, Routes, useParams } from 'react-router-dom'
 import ComponentShowcase from './components/showcase/ComponentShowcase.jsx'
 import LessonView from './components/lessons/LessonView.jsx'
 import ThemeToggle from './components/theme/ThemeToggle.jsx'
-import { buildLessonList, hasLesson } from './lessons.js'
+import { buildLessonCategories, buildLessonList, hasLesson } from './lessons.js'
 
 // Auto-discovers every folder under src/components/ — each folder's .jsx file
 // (the component) and meta.js file (day/name/description/tags) are matched
@@ -292,14 +292,21 @@ function DetailViewRoute() {
 }
 
 const lessonList = buildLessonList(entries)
+const lessonCategories = buildLessonCategories(entries)
 
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<IndexGrid />} />
       <Route path="/components/:slug" element={<DetailViewRoute />} />
-      <Route path="/lessons" element={<LessonView lessonList={lessonList} />} />
-      <Route path="/lessons/:slug" element={<LessonView lessonList={lessonList} />} />
+      <Route
+        path="/lessons"
+        element={<LessonView lessonList={lessonList} lessonCategories={lessonCategories} />}
+      />
+      <Route
+        path="/lessons/:slug"
+        element={<LessonView lessonList={lessonList} lessonCategories={lessonCategories} />}
+      />
     </Routes>
   )
 }

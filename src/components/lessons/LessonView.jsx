@@ -1,14 +1,60 @@
+import { useEffect, useRef, useState, Children } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { getLessonContent, hasLesson } from '../../lessons.js'
+
+function textFromChildren(children) {
+  return Children.toArray(children)
+    .map((child) => {
+      if (typeof child === 'string') return child
+      if (child?.props?.children) return textFromChildren(child.props.children)
+      return ''
+    })
+    .join('')
+}
+
+function slugify(text) {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+}
+
+function stripInlineMarkdown(text) {
+  return text
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .trim()
+}
+
+// Parsed straight from the raw markdown (not the rendered tree) so the TOC is
+// ready before ReactMarkdown even renders — same slugify rule as the h2
+// renderer below keeps the #hash targets in sync.
+function extractHeadings(markdown) {
+  const headings = []
+  for (const line of markdown.split('\n')) {
+    const match = line.match(/^##\s+(.+)$/)
+    if (match) {
+      const text = stripInlineMarkdown(match[1])
+      headings.push({ id: slugify(text), text })
+    }
+  }
+  return headings
+}
 
 const markdownComponents = {
   h1: ({ children }) => (
     <h1 className="mb-4 mt-8 text-2xl font-semibold text-neutral-900 first:mt-0 dark:text-neutral-100">{children}</h1>
   ),
   h2: ({ children }) => (
-    <h2 className="mb-3 mt-8 border-b border-neutral-200 pb-2 text-xl font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-100">
+    <h2
+      id={slugify(textFromChildren(children))}
+      className="mb-3 mt-8 scroll-mt-20 border-b border-neutral-200 pb-2 text-xl font-semibold text-neutral-900 dark:border-neutral-800 dark:text-neutral-100"
+    >
       {children}
     </h2>
   ),
@@ -68,37 +114,87 @@ const markdownComponents = {
   },
 }
 
-export default function LessonView({ lessonList }) {
+function LessonLink({ slug, day, name, isActive }) {
+  return (
+    <Link
+      to={slug === 'index' ? '/lessons' : `/lessons/${slug}`}
+      className={`rounded-md px-2.5 py-1.5 text-sm transition-colors ${
+        isActive
+          ? 'bg-neutral-100 text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100'
+          : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-900/60 dark:hover:text-neutral-200'
+      }`}
+    >
+      {day && <span className="mr-1.5 font-mono text-xs text-[#3fb950]/80 dark:text-[#3fb950]/60">{day}</span>}
+      {name}
+    </Link>
+  )
+}
+
+export default function LessonView({ lessonList, lessonCategories }) {
   const { slug = 'index' } = useParams()
   const content = getLessonContent(slug)
   const current = lessonList.find((l) => l.slug === slug)
   const isIndex = slug === 'index'
+  const articleRef = useRef(null)
+  const [activeId, setActiveId] = useState('')
+  const [scrollProgress, setScrollProgress] = useState(0)
+  const headings = extractHeadings(content)
+
+  useEffect(() => {
+    setActiveId('')
+    // A scroll-position check rather than IntersectionObserver: an instant
+    // jump (scrollbar drag, "scroll amount" beyond one screen) can skip a
+    // heading between two observer checks and leave activeId stuck, since
+    // the observer only reports whether a target is *currently* intersecting
+    // — not every heading it passed through to get there.
+    const onScroll = () => {
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight
+      setScrollProgress(docHeight > 0 ? Math.min(100, Math.max(0, (window.scrollY / docHeight) * 100)) : 0)
+
+      const elements = articleRef.current ? Array.from(articleRef.current.querySelectorAll('h2[id]')) : []
+      let current = ''
+      for (const el of elements) {
+        if (el.getBoundingClientRect().top <= 120) current = el.id
+      }
+      setActiveId(current)
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [slug, content])
 
   return (
     <div className="min-h-screen bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
-      <div className="mx-auto flex min-h-screen max-w-6xl gap-10 px-6 py-16">
+      <div className="fixed left-0 top-0 z-50 h-0.5 w-full bg-transparent">
+        <div
+          className="h-full bg-neutral-900 dark:bg-neutral-100"
+          style={{ width: `${scrollProgress}%`, transition: 'width 100ms linear' }}
+        />
+      </div>
+
+      <div className="mx-auto flex min-h-screen max-w-7xl gap-10 px-6 py-16">
         <div className="hidden w-56 flex-none lg:block">
           <div className="sticky top-16">
-            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">Lessons</p>
-            <nav className="mt-3 flex flex-col gap-0.5">
-              {lessonList.map((lesson) => {
-                const isActive = lesson.slug === slug
-                return (
-                  <Link
-                    key={lesson.slug}
-                    to={lesson.slug === 'index' ? '/lessons' : `/lessons/${lesson.slug}`}
-                    className={`rounded-md px-2.5 py-1.5 text-sm transition-colors ${
-                      isActive
-                        ? 'bg-neutral-100 text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100'
-                        : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-900/60 dark:hover:text-neutral-200'
-                    }`}
-                  >
-                    {lesson.day && <span className="mr-1.5 font-mono text-xs text-[#3fb950]/80 dark:text-[#3fb950]/60">{lesson.day}</span>}
-                    {lesson.name}
-                  </Link>
-                )
-              })}
+            <nav className="flex flex-col gap-0.5">
+              <LessonLink slug="index" day={null} name="Index" isActive={isIndex} />
             </nav>
+
+            {lessonCategories.map((category) => (
+              <div key={category.title} className="mt-5">
+                <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">{category.title}</p>
+                <nav className="mt-2 flex flex-col gap-0.5">
+                  {category.items.map((lesson) => (
+                    <LessonLink
+                      key={`${category.title}-${lesson.slug}-${lesson.name}`}
+                      slug={lesson.slug}
+                      day={lesson.day}
+                      name={lesson.name}
+                      isActive={lesson.slug === slug}
+                    />
+                  ))}
+                </nav>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -110,7 +206,7 @@ export default function LessonView({ lessonList }) {
             ← Back to {isIndex ? 'Component Lab' : current?.name ?? 'component'}
           </Link>
 
-          <article className="mt-6">
+          <article ref={articleRef} className="mt-6">
             {hasLesson(slug) && content ? (
               <ReactMarkdown components={markdownComponents} remarkPlugins={[remarkGfm]}>
                 {content}
@@ -120,6 +216,29 @@ export default function LessonView({ lessonList }) {
             )}
           </article>
         </div>
+
+        {headings.length > 0 && (
+          <div className="hidden w-48 flex-none xl:block">
+            <div className="sticky top-16">
+              <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">On this page</p>
+              <nav className="mt-2 flex flex-col gap-0.5 border-l border-neutral-200 dark:border-neutral-800">
+                {headings.map((heading) => (
+                  <a
+                    key={heading.id}
+                    href={`#${heading.id}`}
+                    className={`-ml-px border-l px-3 py-1 text-sm transition-colors ${
+                      activeId === heading.id
+                        ? 'border-neutral-900 font-medium text-neutral-900 dark:border-neutral-100 dark:text-neutral-100'
+                        : 'border-transparent text-neutral-500 hover:text-neutral-800 dark:text-neutral-500 dark:hover:text-neutral-300'
+                    }`}
+                  >
+                    {heading.text}
+                  </a>
+                ))}
+              </nav>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
