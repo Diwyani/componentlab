@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const images = [
@@ -8,9 +8,17 @@ const images = [
   { id: "4", url: "https://picsum.photos/seed/four/400/300" },
 ];
 
-export default function ImageGalleryLayout() {
+// `autoPlay` is opt-in, unused by this component's own day page — it opens
+// the same real lightbox the click handler already triggers.
+export default function ImageGalleryLayout({ autoPlay = false }) {
   const [selectedId, setSelectedId] = useState(null);
   const selected = images.find((img) => img.id === selectedId);
+
+  useEffect(() => {
+    if (!autoPlay) return;
+    const timer = setTimeout(() => setSelectedId(images[0].id), 300);
+    return () => clearTimeout(timer);
+  }, [autoPlay]);
 
   return (
     <div className="w-80">

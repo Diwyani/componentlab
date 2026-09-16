@@ -154,12 +154,12 @@ function IndexGrid() {
                 <Star className="h-4 w-4" />
                 Star on GitHub
               </a>
-              <a
-                href="#components"
+              <Link
+                to="/lessons"
                 className="text-sm text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
               >
-                Learn now
-              </a>
+                Learn lesson
+              </Link>
             </div>
           </div>
         </div>
