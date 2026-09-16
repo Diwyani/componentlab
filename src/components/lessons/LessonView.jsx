@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, Children } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { Star } from 'lucide-react'
+import ComponentShowcase from '../showcase/ComponentShowcase.jsx'
 import { getLessonContent, hasLesson } from '../../lessons.js'
 
 function textFromChildren(children) {
@@ -130,10 +132,11 @@ function LessonLink({ slug, day, name, isActive }) {
   )
 }
 
-export default function LessonView({ lessonList, lessonCategories }) {
+export default function LessonView({ lessonList, lessonCategories, entries = [] }) {
   const { slug = 'index' } = useParams()
   const content = getLessonContent(slug)
   const current = lessonList.find((l) => l.slug === slug)
+  const entry = entries.find((e) => e.slug === slug)
   const isIndex = slug === 'index'
   const articleRef = useRef(null)
   const [activeId, setActiveId] = useState('')
@@ -172,8 +175,8 @@ export default function LessonView({ lessonList, lessonCategories }) {
         />
       </div>
 
-      <div className="mx-auto flex min-h-screen max-w-7xl gap-10 px-6 py-16">
-        <div className="hidden w-56 flex-none lg:block">
+      <div className="mx-auto flex min-h-screen max-w-7xl gap-8 px-6 py-16">
+        <div className="hidden w-56 flex-none border-r border-neutral-200 pr-8 dark:border-neutral-800 lg:block">
           <div className="sticky top-16">
             <nav className="flex flex-col gap-0.5">
               <LessonLink slug="index" day={null} name="Index" isActive={isIndex} />
@@ -203,14 +206,29 @@ export default function LessonView({ lessonList, lessonCategories }) {
         </div>
 
         <div className="min-w-0 flex-1">
-          <Link
-            to={isIndex ? '/' : `/components/${slug}`}
-            className="text-sm text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
-          >
-            ← Back to {isIndex ? 'Component Lab' : current?.name ?? 'component'}
-          </Link>
+          <nav className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
+            <Link to="/" className="transition-colors hover:text-neutral-900 dark:hover:text-white">
+              Component Lab
+            </Link>
+            <span>→</span>
+            <Link to="/lessons" className="transition-colors hover:text-neutral-900 dark:hover:text-white">
+              Lessons
+            </Link>
+            {!isIndex && (
+              <>
+                <span>→</span>
+                <span className="text-neutral-900 dark:text-neutral-100">{current?.name ?? 'Component'}</span>
+              </>
+            )}
+          </nav>
 
-          <article ref={articleRef} className="mt-6">
+          {!isIndex && entry?.component && (
+            <div className="mt-6">
+              <ComponentShowcase preview={<entry.component />} code={entry.source} language="jsx" />
+            </div>
+          )}
+
+          <article ref={articleRef} className="mt-8">
             {hasLesson(slug) && content ? (
               <ReactMarkdown components={markdownComponents} remarkPlugins={[remarkGfm]}>
                 {content}
@@ -222,9 +240,19 @@ export default function LessonView({ lessonList, lessonCategories }) {
         </div>
 
         {headings.length > 0 && (
-          <div className="hidden w-48 flex-none xl:block">
+          <div className="hidden w-48 flex-none border-l border-neutral-200 pl-8 dark:border-neutral-800 xl:block">
             <div className="sticky top-16">
-              <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">On this page</p>
+              <a
+                href="https://github.com/Diwyani/componentlab"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#3fb950]/80 transition-colors hover:text-[#3fb950]"
+              >
+                <Star className="h-4 w-4" />
+                Star on GitHub
+              </a>
+
+              <p className="mt-5 text-xs font-medium uppercase tracking-wide text-neutral-500">On this page</p>
               <nav className="mt-2 flex flex-col gap-0.5 border-l border-neutral-200 dark:border-neutral-800">
                 {headings.map((heading) => (
                   <a
