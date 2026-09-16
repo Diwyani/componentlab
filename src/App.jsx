@@ -1,8 +1,11 @@
 import { Fragment, useEffect, useState } from 'react'
+import { Star } from 'lucide-react'
 import { Link, Route, Routes, useParams } from 'react-router-dom'
 import ComponentShowcase from './components/showcase/ComponentShowcase.jsx'
 import LessonView from './components/lessons/LessonView.jsx'
 import ThemeToggle from './components/theme/ThemeToggle.jsx'
+import HeroShowcase from './components/hero/HeroShowcase.jsx'
+import AppLoader from './components/loader/AppLoader.jsx'
 import { buildLessonCategories, buildLessonList, hasLesson } from './lessons.js'
 
 // Auto-discovers every folder under src/components/ — each folder's .jsx file
@@ -104,29 +107,64 @@ function IndexGrid() {
 
   return (
     <div className="min-h-screen bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
-      <div className="mx-auto max-w-4xl px-6 py-16">
-        <h1 className="text-2xl font-semibold tracking-tight">Component Lab</h1>
-        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-          Daily component practice — Framer Motion → GSAP → Three.js
-        </p>
+      <div className="mx-auto max-w-5xl px-6 py-16">
+        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-2">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Component Lab</h1>
 
-        <div className="mt-6 flex flex-wrap gap-2">
-          {filters.map((filter) => (
-            <button
-              key={filter.label}
-              onClick={() => setActiveFilter(filter.tag)}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                activeFilter === filter.tag
-                  ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-950'
-                  : 'bg-neutral-100 text-neutral-600 hover:text-neutral-900 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200'
-              }`}
-            >
-              {filter.label}
-            </button>
-          ))}
+            <div className="mt-6">
+              <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Why Component Lab?</h2>
+              <p className="mt-2 text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                Learn on the go, learn by doing.
+              </p>
+              <p className="mt-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+                There's a real gap for designers who want to learn to code: most resources assume you're starting
+                from zero or already deep in engineering, nothing in between. The best way to learn anything is to
+                get your hands dirty: build things, get stuck, sob a little, figure it out.
+              </p>
+              <p className="mt-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+                If vibe-coding alone isn't cutting it and you want to actually understand what's happening, this is
+                for you. Web only, for now: React, Framer Motion.
+              </p>
+              <p className="mt-4 text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                This project is an attempt to:
+              </p>
+              <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+                <li>Dissect the logic behind the code: not just copy it, understand why it works</li>
+                <li>Show what belongs where: what's Tailwind, what's React, what's plain JavaScript</li>
+                <li>Point you toward what to learn next to build a stronger foundation</li>
+                <li>
+                  Stay alive: this is a living document, not a finished one. Feedback and questions welcome on
+                  Twitter or by email.
+                </li>
+              </ol>
+            </div>
+          </div>
+
+          <div>
+            <HeroShowcase />
+
+            <div className="mt-4 flex flex-wrap items-center gap-5">
+              <a
+                href="https://github.com/Diwyani/componentlab"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#3fb950]/80 transition-colors hover:text-[#3fb950]"
+              >
+                <Star className="h-4 w-4" />
+                Star on GitHub
+              </a>
+              <a
+                href="#components"
+                className="text-sm text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+              >
+                Learn now
+              </a>
+            </div>
+          </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div id="components" className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {filteredEntries.map(({ slug, day, name, description, tags }, index) => (
             <Fragment key={slug}>
               {index > 0 && index % 7 === 0 && (
@@ -296,17 +334,19 @@ const lessonCategories = buildLessonCategories(entries)
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<IndexGrid />} />
-      <Route path="/components/:slug" element={<DetailViewRoute />} />
-      <Route
-        path="/lessons"
-        element={<LessonView lessonList={lessonList} lessonCategories={lessonCategories} />}
-      />
-      <Route
-        path="/lessons/:slug"
-        element={<LessonView lessonList={lessonList} lessonCategories={lessonCategories} />}
-      />
-    </Routes>
+    <AppLoader>
+      <Routes>
+        <Route path="/" element={<IndexGrid />} />
+        <Route path="/components/:slug" element={<DetailViewRoute />} />
+        <Route
+          path="/lessons"
+          element={<LessonView lessonList={lessonList} lessonCategories={lessonCategories} />}
+        />
+        <Route
+          path="/lessons/:slug"
+          element={<LessonView lessonList={lessonList} lessonCategories={lessonCategories} />}
+        />
+      </Routes>
+    </AppLoader>
   )
 }

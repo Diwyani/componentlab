@@ -1,9 +1,19 @@
 // TODO: build the toggle switch component here.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-export default function ToggleSwitch() {
+// `autoPlay` is opt-in and unused by every normal usage of this component
+// (its own day page renders <ToggleSwitch /> with no props) — it only
+// exists so a showcase reel can trigger the same state change the click
+// handler already does, without faking a separate animation.
+export default function ToggleSwitch({ autoPlay = false }) {
   const [isOn, setIsOn] = useState(false);
+
+  useEffect(() => {
+    if (!autoPlay) return;
+    const timer = setTimeout(() => setIsOn(true), 300);
+    return () => clearTimeout(timer);
+  }, [autoPlay]);
 
   return (
     <div

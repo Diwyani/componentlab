@@ -1,6 +1,6 @@
 export const meta = {
   day: '017',
   name: 'Draggable Bottom Sheet',
-  description: 'TODO: describe what this component does.',
+  description: 'A draggable bottom sheet that snaps to open, half, or closed positions based on drag distance and velocity.',
   tags: ['react', 'tailwindcss', 'framer motion'],
 }

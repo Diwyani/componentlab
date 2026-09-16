@@ -1,6 +1,6 @@
 export const meta = {
   day: '015',
   name: 'Swipeable Card Stack',
-  description: 'TODO: describe what this component does.',
+  description: 'A stack of cards that can be swiped left or right to dismiss, revealing the next card underneath.',
   tags: ['react', 'tailwindcss', 'framer motion'],
 }

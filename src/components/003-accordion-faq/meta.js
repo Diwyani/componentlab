@@ -1,6 +1,6 @@
 export const meta = {
   day: '003',
   name: 'Accordion FAQ',
-  description: 'TODO: describe what this component does.',
+  description: 'An FAQ accordion where each answer expands and collapses with an animated height transition.',
   tags: ['react', 'tailwindcss', 'framer motion'],
 }

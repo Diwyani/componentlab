@@ -1,10 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 const steps = ["Account", "Profile", "Payment", "Confirm"];
 
-export default function ProgressStepper() {
+// `autoPlay` is opt-in, unused by this component's own day page — it steps
+// through the same setCurrent the Next button already calls, on an
+// interval, so a showcase reel sees the fill animate progressively rather
+// than jumping straight to the end.
+export default function ProgressStepper({ autoPlay = false }) {
   const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    if (!autoPlay) return;
+    const interval = setInterval(() => {
+      setCurrent((c) => {
+        if (c >= steps.length - 1) {
+          clearInterval(interval);
+          return c;
+        }
+        return c + 1;
+      });
+    }, 700);
+    return () => clearInterval(interval);
+  }, [autoPlay]);
 
   return (
     <div className="w-96">

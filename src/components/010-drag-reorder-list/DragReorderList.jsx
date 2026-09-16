@@ -1,10 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Reorder } from "framer-motion";
 
 const initialItems = ["Write daily component", "Review pull requests", "Ship the release", "Reply to feedback"];
 
-export default function DragReorderList() {
+// `autoPlay` is opt-in, unused by this component's own day page. Rather than
+// faking a pointer drag, it just swaps two items in the array — Reorder.Group
+// already animates any array-order change as a layout transition, so this
+// plays the component's real reorder animation, just triggered by data
+// instead of a gesture.
+export default function DragReorderList({ autoPlay = false }) {
   const [items, setItems] = useState(initialItems);
+
+  useEffect(() => {
+    if (!autoPlay) return;
+    const timer = setTimeout(() => {
+      setItems((prev) => {
+        const next = [...prev];
+        const first = next[0];
+        next[0] = next[2];
+        next[2] = first;
+        return next;
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [autoPlay]);
 
   return (
     <Reorder.Group

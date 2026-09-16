@@ -1,6 +1,6 @@
 export const meta = {
   day: '016',
   name: 'Pull To Refresh',
-  description: 'TODO: describe what this component does.',
+  description: 'A pull-to-refresh list where dragging the content down past a threshold triggers a spinning refresh animation.',
   tags: ['react', 'tailwindcss', 'framer motion'],
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 
@@ -10,8 +10,21 @@ const card = {
     "Ship the progress stepper, fix the drawer's controlled-props issue, and start the drag-to-reorder list. Remember to update meta.js descriptions before Friday.",
 };
 
-export default function CardExpandDetail() {
+// `autoPlay` is opt-in, unused by this component's own day page — it opens
+// the same real expand animation the click handler already triggers. Note:
+// the expanded state below uses `fixed` positioning (correct for this
+// component's normal full-page usage), so a showcase reel embedding this
+// needs its own wrapper to establish a containing block for `fixed`
+// descendants, or the backdrop/modal will cover the whole viewport instead
+// of staying boxed in.
+export default function CardExpandDetail({ autoPlay = false }) {
   const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!autoPlay) return;
+    const timer = setTimeout(() => setIsExpanded(true), 300);
+    return () => clearTimeout(timer);
+  }, [autoPlay]);
 
   return (
     <div className="relative flex w-80 items-center justify-center">

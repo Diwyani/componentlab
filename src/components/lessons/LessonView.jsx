@@ -179,6 +179,10 @@ export default function LessonView({ lessonList, lessonCategories }) {
               <LessonLink slug="index" day={null} name="Index" isActive={isIndex} />
             </nav>
 
+            <p className="mt-3 text-xs leading-relaxed text-neutral-400 dark:text-neutral-600">
+              Grouped by concept, not day number: the numbers still mark build order.
+            </p>
+
             {lessonCategories.map((category) => (
               <div key={category.title} className="mt-5">
                 <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">{category.title}</p>

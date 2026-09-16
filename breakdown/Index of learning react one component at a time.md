@@ -1,10 +1,17 @@
+## Why Component Lab?
 
+**Learn on the go, learn by doing.**
 
-I made this because there is lack of structure, where should one start. Having a supercial knowledge while vibe coding won't take you far, will kepp you dependent. to understand what's going on, to hold, to figure a way out you have train your brain to read code, understand and if required thing of logic and debug it as well//
+There's a real gap for designers who want to learn to code: most resources assume you're starting from zero or already deep in engineering, nothing in between. The best way to learn anything is to get your hands dirty: build things, get stuck, sob a little, figure it out.
 
-// I will suggest open code side by side while doing this, here is git repo and may be run it to learn as well// 
+If vibe-coding alone isn't cutting it and you want to actually understand what's happening, this is for you. Web only, for now: React, Framer Motion.
 
+This project is an attempt to:
 
+1. Dissect the logic behind the code: not just copy it, understand why it works
+2. Show what belongs where: what's Tailwind, what's React, what's plain JavaScript
+3. Point you toward what to learn next to build a stronger foundation
+4. Stay alive: this is a living document, not a finished one. Feedback and questions welcome on Twitter or by email.
 
 component-lab/
 ├── README.md                 ← running index, updated daily (this becomes your "12 Components" list)

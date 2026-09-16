@@ -1,6 +1,6 @@
 export const meta = {
   day: '002',
   name: 'Tab Switcher',
-  description: 'TODO: describe what this component does.',
+  description: "A tab switcher with a pill background that slides between tabs using Framer Motion's shared layout animation.",
   tags: ['react', 'tailwindcss', 'framer motion'],
 }

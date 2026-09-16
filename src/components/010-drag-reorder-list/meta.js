@@ -1,6 +1,6 @@
 export const meta = {
   day: '010',
   name: 'Drag Reorder List',
-  description: 'TODO: describe what this component does.',
+  description: "A list whose items can be dragged and dropped to reorder them, using Framer Motion's Reorder component.",
   tags: ['react', 'tailwindcss', 'framer motion'],
 }
