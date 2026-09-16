@@ -1,5 +1,4 @@
 import { Fragment, useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
 import { Star } from 'lucide-react'
 import { Link, Route, Routes, useParams } from 'react-router-dom'
 import ComponentShowcase from './components/showcase/ComponentShowcase.jsx'
@@ -31,40 +30,6 @@ const entries = Object.keys(metaModules)
     }
   })
   .sort((a, b) => a.day.localeCompare(b.day))
-
-// A 2-stud brick drawn as a literal pixel grid (each cell its own <rect>,
-// with a small gap between cells) rather than a smooth icon shape, so it
-// actually reads as "made of pixels" at small sizes.
-const LEGO_PIXELS = [
-  [1, 0], [2, 0], [4, 0], [5, 0],
-  [1, 1], [2, 1], [4, 1], [5, 1],
-  [0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2],
-  [0, 3], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3],
-  [0, 4], [1, 4], [2, 4], [3, 4], [4, 4], [5, 4],
-]
-
-function LegoPixelIcon({ className = 'h-7 w-7' }) {
-  return (
-    <motion.svg
-      viewBox="0 0 6 5"
-      className={className}
-      aria-hidden="true"
-      // A slow idle bob so it never looks static, plus a snappier wiggle +
-      // pop on hover — two different motions, not the same loop sped up.
-      animate={{ y: [0, -2, 0], rotate: [0, -3, 0, 3, 0] }}
-      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-      whileHover={{
-        rotate: [0, -12, 10, -6, 0],
-        scale: 1.15,
-        transition: { duration: 0.5, ease: 'easeInOut' },
-      }}
-    >
-      {LEGO_PIXELS.map(([x, y]) => (
-        <rect key={`${x}-${y}`} x={x + 0.08} y={y + 0.08} width={0.84} height={0.84} fill="#3fb950" />
-      ))}
-    </motion.svg>
-  )
-}
 
 function Tag({ children }) {
   return (
@@ -162,10 +127,7 @@ function IndexGrid() {
       <div className="mx-auto max-w-5xl px-6 py-16">
         <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-2">
           <div>
-            <div className="flex items-center gap-2">
-              <LegoPixelIcon className="h-7 w-7" />
-              <h1 className="text-2xl font-semibold tracking-tight">Component Lab</h1>
-            </div>
+            <h1 className="text-2xl font-semibold tracking-tight">Component Lab</h1>
 
             <div className="mt-6">
               <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Why Component Lab?</h2>
