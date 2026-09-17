@@ -141,7 +141,22 @@ export default function LessonView({ lessonList, lessonCategories, entries = [] 
   const articleRef = useRef(null)
   const [activeId, setActiveId] = useState('')
   const [scrollProgress, setScrollProgress] = useState(0)
+  const [query, setQuery] = useState('')
   const headings = extractHeadings(content)
+
+  // Filters each category's items by name/slug — categories with zero
+  // remaining matches are dropped entirely rather than shown empty.
+  const normalizedQuery = query.trim().toLowerCase()
+  const filteredCategories = normalizedQuery
+    ? lessonCategories
+        .map((category) => ({
+          ...category,
+          items: category.items.filter(
+            (item) => item.name.toLowerCase().includes(normalizedQuery) || item.slug.includes(normalizedQuery)
+          ),
+        }))
+        .filter((category) => category.items.length > 0)
+    : lessonCategories
 
   useEffect(() => {
     setActiveId('')
@@ -186,7 +201,19 @@ export default function LessonView({ lessonList, lessonCategories, entries = [] 
               Grouped by concept, not day number: the numbers still mark build order.
             </p>
 
-            {lessonCategories.map((category) => (
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search lessons..."
+              className="mt-4 w-full rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-600"
+            />
+
+            {filteredCategories.length === 0 && (
+              <p className="mt-4 text-xs text-neutral-400 dark:text-neutral-600">No lessons match "{query}".</p>
+            )}
+
+            {filteredCategories.map((category) => (
               <div key={category.title} className="mt-5">
                 <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">{category.title}</p>
                 <nav className="mt-2 flex flex-col gap-0.5">
@@ -221,6 +248,13 @@ export default function LessonView({ lessonList, lessonCategories, entries = [] 
               </>
             )}
           </nav>
+
+          {!isIndex && entry?.prerequisites?.length > 0 && (
+            <p className="mt-4 text-sm text-neutral-500 dark:text-neutral-400">
+              <span className="font-medium text-neutral-700 dark:text-neutral-300">Builds on:</span>{' '}
+              {entry.prerequisites.join(', ')}
+            </p>
+          )}
 
           {!isIndex && entry?.component && (
             <div className="mt-6">

@@ -24,6 +24,12 @@ const slugToFile = {
   '012-progress-stepper': 'Progress Stepper',
   '013-segmented-control': 'Segmented control',
   '014-card-expand-detail': 'Card that expands',
+  '015-swipeable-card-stack': 'Swipeable Card Stack',
+  '016-pull-to-refresh': 'Pull To Refresh',
+  '017-draggable-bottom-sheet': 'Draggable Bottom Sheet',
+  '018-password-strength-meter': 'Password Strength Meter',
+  '019-copy-to-clipboard': 'Copy To Clipboard',
+  '020-rating-stars': 'Rating Stars',
 }
 
 const INDEX_FILE = 'Index of learning react one component at a time'
@@ -98,15 +104,29 @@ const CATEGORY_DEFS = [
 export function buildLessonCategories(entries) {
   const bySlug = Object.fromEntries(entries.map((entry) => [entry.slug, entry]))
 
-  return CATEGORY_DEFS.map(({ title, items }) => ({
-    title,
-    items: items
+  return CATEGORY_DEFS.map(({ title, items }) => {
+    // Sorted by day within the category (not just definition order) so the
+    // lowest day number always comes first — an implicit "start here, come
+    // back to the rest later" signal, without a separate difficulty rating
+    // to invent or keep in sync.
+    const resolved = items
       .map((item) => {
         const ref = typeof item === 'string' ? { slug: item } : item
         const entry = bySlug[ref.slug]
         if (!entry) return null
-        return { slug: entry.slug, day: entry.day, name: ref.label ?? entry.name }
+        return {
+          slug: entry.slug,
+          day: entry.day,
+          name: ref.label ?? entry.name,
+          prerequisites: entry.prerequisites ?? [],
+        }
       })
-      .filter(Boolean),
-  }))
+      .filter(Boolean)
+      .sort((a, b) => a.day.localeCompare(b.day))
+
+    return {
+      title,
+      items: resolved.map((item, index) => ({ ...item, isFirstInCategory: index === 0 })),
+    }
+  })
 }

@@ -1,5 +1,3 @@
-## Why Component Lab?
-
 **Learn on the go, learn by doing.**
 
 There's a real gap for designers who want to learn to code: most resources assume you're starting from zero or already deep in engineering, nothing in between. The best way to learn anything is to get your hands dirty: build things, get stuck, sob a little, figure it out.
@@ -63,14 +61,14 @@ Organized by **what you're learning**, not the order things were built in. The d
 4. [[Tooltip]] (004) — responding to real-time browser events (mouse position)
 5. [[Like Button]] (005) — one boolean driving both appearance *and* animation replay
 6. [[Toast]] (007) — state as an array of independent, timed items
-7. Rating Stars (020) — hover-driven fill, *upcoming*
-8. Password Strength Meter (018) — live feedback as you type, *upcoming*
+7. [[Rating Stars]] (020) — hover-driven fill, preview vs. commit state
+8. [[Password Strength Meter]] (018) — live feedback as you type, data-driven rules
 
 ### 03 — Effects & Browser APIs
 
 9. [[Skeleton Loader]] (006) — `useEffect`, timers, cleanup
 10. [[Drawer Modal]] (008) — `useEffect` reaching outside React (scroll lock, keyboard listener)
-11. Copy To Clipboard (019) — the Clipboard API, *upcoming*
+11. [[Copy To Clipboard]] (019) — the Clipboard API, async/await
 
 ### 04 — Data & Lists
 
@@ -84,9 +82,9 @@ Organized by **what you're learning**, not the order things were built in. The d
 16. ==[[Progress Stepper]]== (012) — one piece of state driving many visual details
 17. [[Segmented control]] (013) — shared layout animation; later became a reusable primitive
 18. ==[[Card that expands]]== (014) — `layoutId` morphing between two different layouts
-19. Swipeable Card Stack (015) — drag gestures + exit direction
-20. Draggable Bottom Sheet (017) — drag with multiple snap points
-21. Pull To Refresh (016) — drag distance driving a threshold-triggered action
+19. [[Swipeable Card Stack]] (015) — drag gestures + exit direction
+20. [[Draggable Bottom Sheet]] (017) — drag with multiple snap points
+21. [[Pull To Refresh]] (016) — drag distance driving a threshold-triggered action
 
 ### 06 — Component Architecture
 

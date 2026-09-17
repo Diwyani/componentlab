@@ -1,6 +1,7 @@
 export const meta = {
   day: '019',
   name: 'Copy To Clipboard',
-  description: 'TODO: describe what this component does.',
+  description: 'A copy-to-clipboard button whose icon morphs into a checkmark for a moment after copying, then reverts.',
   tags: ['react', 'tailwindcss', 'framer motion'],
+  prerequisites: ['useState', 'async/await', 'try/catch'],
 }

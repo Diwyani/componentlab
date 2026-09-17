@@ -3,4 +3,5 @@ export const meta = {
   name: 'Toast Notification',
   description: 'A toast system where clicking a button queues a message that animates in, then slides out after a few seconds.',
   tags: ['react', 'tailwindcss', 'framer motion'],
+  prerequisites: ['useState', 'arrays as state', 'setTimeout'],
 }
