@@ -12,7 +12,6 @@ export default function DrawerModal() {
     </p>
   );
 
-  // lock body scroll while open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -24,7 +23,6 @@ export default function DrawerModal() {
     };
   }, [isOpen]);
 
-  // close on Escape
   useEffect(() => {
     const handleKey = (e) => {
       if (e.key === "Escape") onClose();
@@ -45,7 +43,6 @@ export default function DrawerModal() {
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               className="fixed inset-0 bg-black/50 z-40"
               initial={{ opacity: 0 }}
@@ -55,7 +52,6 @@ export default function DrawerModal() {
               onClick={onClose}
             />
 
-            {/* Drawer panel */}
             <motion.div
               className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-neutral-900 rounded-t-2xl shadow-xl max-h-[85vh] flex flex-col"
               initial={{ y: "100%" }}
@@ -74,7 +70,6 @@ export default function DrawerModal() {
               aria-modal="true"
               aria-label={title ?? "Drawer"}
             >
-              {/* Drag handle */}
               <div className="flex justify-center pt-3 pb-1 shrink-0">
                 <div className="w-10 h-1.5 rounded-full bg-neutral-300 dark:bg-neutral-700" />
               </div>

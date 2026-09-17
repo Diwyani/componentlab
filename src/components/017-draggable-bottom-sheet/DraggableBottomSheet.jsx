@@ -8,9 +8,6 @@ export default function DraggableBottomSheet() {
   const [snap, setSnap] = useState("half");
 
   function handleDragEnd(_, info) {
-    // Predict where it would come to rest: current resting position + how far
-    // it was dragged + a nudge from velocity, so a fast flick can jump two
-    // snap points instead of only ever landing on the nearest one.
     const projected = SNAPS[snap] + info.offset.y + info.velocity.y * 0.15;
 
     let closest = ORDER[0];

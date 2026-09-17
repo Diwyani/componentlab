@@ -1,4 +1,3 @@
-// TODO: build the tab switcher component here.
 import { useState } from "react";
 import { motion } from "framer-motion";
 

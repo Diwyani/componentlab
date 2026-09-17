@@ -4,7 +4,6 @@ import ToggleSwitch from "../001-toggle-switch/ToggleSwitch.jsx";
 import DragReorderList from "../010-drag-reorder-list/DragReorderList.jsx";
 import LikeHeartButton from "../005-like-heart-button/LikeHeartButton.jsx";
 import ProgressStepper from "../012-progress-stepper/ProgressStepper.jsx";
-import ImageGalleryLayout from "../011-image-gallery-layout/ImageGalleryLayout.jsx";
 
 const DEFAULT_DURATION = 3200;
 
@@ -12,13 +11,13 @@ const DEFAULT_DURATION = 3200;
 // own real interaction fires itself instead of waiting for a hover/click
 // nobody is going to make in a passive showcase reel. Toggle Switch gets a
 // shorter slot since its flip completes almost instantly — no need to hold
-// on it as long as the others.
+// on it as long as the others. `label` names the one React/Framer Motion
+// piece each example is actually demonstrating, shown as a small caption.
 const slots = [
-  { Component: ToggleSwitch, duration: 1600 },
-  { Component: DragReorderList, duration: DEFAULT_DURATION },
-  { Component: LikeHeartButton, duration: DEFAULT_DURATION },
-  { Component: ProgressStepper, duration: DEFAULT_DURATION },
-  { Component: ImageGalleryLayout, duration: DEFAULT_DURATION },
+  { Component: ToggleSwitch, duration: 1600, label: "useState" },
+  { Component: DragReorderList, duration: DEFAULT_DURATION, label: "Reorder" },
+  { Component: LikeHeartButton, duration: DEFAULT_DURATION, label: "animate" },
+  { Component: ProgressStepper, duration: DEFAULT_DURATION, label: "ease" },
 ];
 
 export default function HeroShowcase() {
@@ -37,14 +36,7 @@ export default function HeroShowcase() {
   const ActiveComponent = active.Component;
 
   return (
-    <div
-      className="relative flex h-96 w-full items-center justify-center overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900/40"
-      // Establishes a containing block for `fixed`-positioned descendants
-      // (ImageGalleryLayout's lightbox overlay uses `fixed`, correct for
-      // its normal full-page usage) so that overlay stays boxed in here
-      // instead of covering the whole viewport.
-      style={{ transform: "translateZ(0)" }}
-    >
+    <div className="relative flex h-96 w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900/40">
       {/* `tick` (not the component index) is the key, so every cycle is a
           genuine fresh mount — including wrapping back to a component that
           was already shown — which is what makes its autoPlay effect fire
@@ -61,6 +53,12 @@ export default function HeroShowcase() {
       >
         <ActiveComponent autoPlay />
       </motion.div>
+
+      <p className="font-mono text-xs text-neutral-400 dark:text-neutral-500">
+        {'→ { '}
+        {active.label}
+        {' }'}
+      </p>
     </div>
   );
 }

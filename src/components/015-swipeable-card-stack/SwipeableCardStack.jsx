@@ -45,7 +45,7 @@ export default function SwipeableCardStack() {
             .slice()
             .reverse()
             .map((card, i) => {
-              const position = visible.length - 1 - i // 0 = top of the stack
+              const position = visible.length - 1 - i;
               const isTop = position === 0
               const direction = exitDirections[card.id] ?? 1
 

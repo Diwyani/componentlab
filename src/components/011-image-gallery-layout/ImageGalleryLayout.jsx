@@ -8,8 +8,6 @@ const images = [
   { id: "4", url: "https://picsum.photos/seed/four/400/300" },
 ];
 
-// `autoPlay` is opt-in, unused by this component's own day page — it opens
-// the same real lightbox the click handler already triggers.
 export default function ImageGalleryLayout({ autoPlay = false }) {
   const [selectedId, setSelectedId] = useState(null);
   const selected = images.find((img) => img.id === selectedId);

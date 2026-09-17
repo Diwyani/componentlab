@@ -11,9 +11,7 @@ export default function CopyToClipboard() {
       await navigator.clipboard.writeText(SNIPPET);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Clipboard API unavailable (permissions, insecure context, etc.) — copy silently no-ops.
-    }
+    } catch {}
   }
 
   return (

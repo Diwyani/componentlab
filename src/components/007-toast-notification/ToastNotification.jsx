@@ -1,4 +1,3 @@
-// TODO: build the toast notification (enter/exit) component here.
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 

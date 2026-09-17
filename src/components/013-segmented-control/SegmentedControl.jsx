@@ -1,9 +1,6 @@
 import { useId, useState } from "react";
 import { motion } from "framer-motion";
 
-// Reusable pill-switcher primitive. `layoutId` isolates the shared-layout
-// animation per instance (defaults to a generated id) so multiple Segmented
-// controls can be on screen at once without their pills morphing into each other.
 export function Segmented({ options, value, onChange, layoutId }) {
   const autoId = useId();
   const pillId = layoutId ?? autoId;

@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
 
-// `autoPlay` is opt-in, unused by this component's own day page — it lets a
-// showcase reel trigger the real like animation instead of faking one.
 export default function LikeButton({ autoPlay = false }) {
   const [isLiked, setIsLiked] = useState(false);
 

@@ -1,4 +1,3 @@
-// TODO: build the skeleton loader -> content swap component here.
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
