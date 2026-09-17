@@ -126,7 +126,14 @@ function LessonLink({ slug, day, name, isActive }) {
           : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-900/60 dark:hover:text-neutral-200'
       }`}
     >
-      {day && <span className="mr-1.5 font-mono text-xs text-[#3fb950]/80 dark:text-[#3fb950]/60">{day}</span>}
+      {day && (
+        <span
+          className="mr-1.5 text-sm text-[#3fb950]/80 dark:text-[#3fb950]/60"
+          style={{ fontFamily: '"Dokdo", cursive' }}
+        >
+          {day}
+        </span>
+      )}
       {name}
     </Link>
   )

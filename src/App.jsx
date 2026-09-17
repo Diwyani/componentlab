@@ -83,7 +83,10 @@ function SocialLinks() {
           aria-label={label}
           target={external ? '_blank' : undefined}
           rel={external ? 'noopener noreferrer' : undefined}
-          className="text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+          // `brightness` is layered on top of the color transition so each
+          // icon reacts on its own hover, independent of its neighbors:
+          // darker in light mode, brighter in dark mode.
+          className="text-neutral-500 transition-all hover:text-neutral-900 hover:brightness-75 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:brightness-150"
         >
           {icon}
         </a>
@@ -104,7 +107,7 @@ const filters = [
 // real total), not anything filtered, so it never fluctuates.
 function BottomBar() {
   return (
-    <div className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full border border-neutral-200 bg-white/80 px-4 py-2 text-xs text-neutral-600 backdrop-blur dark:border-neutral-800 dark:bg-neutral-900/80 dark:text-neutral-400">
+    <div className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full border border-neutral-200 bg-white/80 px-4 py-2 text-xs text-neutral-600 backdrop-blur transition-transform duration-200 hover:scale-105 dark:border-neutral-800 dark:bg-neutral-900/80 dark:text-neutral-400">
       <span>
         {entries.length} Component{entries.length === 1 ? '' : 's'}
       </span>
@@ -127,57 +130,44 @@ function IndexGrid() {
       <div className="mx-auto max-w-5xl px-6 py-16">
         <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-2">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Component Lab</h1>
+            <p
+              className="text-xs text-neutral-500 dark:text-neutral-400"
+              style={{ fontFamily: '"Dokdo", cursive' }}
+            >
+              Learn on the go
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight">Component Lab</h1>
 
-            <div className="mt-6">
-              <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Why Component Lab?</h2>
-              <p className="mt-2 text-sm font-medium text-neutral-800 dark:text-neutral-200">
-                Learn on the go, learn by doing.
-              </p>
-              <p className="mt-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
-                There's a real gap for designers who want to learn to code: most resources assume you're starting
-                from zero or already deep in engineering, nothing in between. The best way to learn anything is to
-                get your hands dirty: build things, get stuck, sob a little, figure it out.
-              </p>
-              <p className="mt-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
-                If vibe-coding alone isn't cutting it and you want to actually understand what's happening, this is
-                for you. Web only, for now: React, Framer Motion.
-              </p>
-              <p className="mt-4 text-sm font-medium text-neutral-800 dark:text-neutral-200">
-                This project is an attempt to:
-              </p>
-              <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
-                <li>Dissect the logic behind the code: not just copy it, understand why it works</li>
-                <li>Show what belongs where: what's Tailwind, what's React, what's plain JavaScript</li>
-                <li>Point you toward what to learn next to build a stronger foundation</li>
-                <li>
-                  Stay alive: this is a living document, not a finished one. Feedback and questions welcome on
-                  Twitter or by email.
-                </li>
-              </ol>
-            </div>
-          </div>
+            <p className="mt-4 max-w-xl text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+              There's a real gap for designers who want to learn to code: most resources assume you're starting from
+              zero or already deep in engineering, nothing in between. The best way to learn anything is to get your
+              hands dirty: build things, get stuck, sob a little, figure it out.
+            </p>
 
-          <div>
-            <HeroShowcase />
-
-            <div className="mt-4 flex flex-wrap items-center gap-5">
+            <div
+              className="mt-4 flex flex-wrap items-center gap-5"
+              style={{ fontFamily: '"Dokdo", cursive' }}
+            >
               <a
                 href="https://github.com/Diwyani/componentlab"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#3fb950]/80 transition-colors hover:text-[#3fb950]"
+                className="inline-flex items-center gap-1.5 text-base font-semibold text-[#3fb950]/80 transition-colors hover:text-[#3fb950]"
               >
                 <Star className="h-4 w-4" />
                 Star on GitHub
               </a>
               <Link
                 to="/lessons"
-                className="text-sm text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+                className="text-base text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
               >
                 Learn lesson
               </Link>
             </div>
+          </div>
+
+          <div>
+            <HeroShowcase />
           </div>
         </div>
 
@@ -193,7 +183,12 @@ function IndexGrid() {
               >
                 <div className="flex items-center justify-between">
                   <h2 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{name}</h2>
-                  <span className="font-mono text-xs text-[#3fb950]/80 dark:text-[#3fb950]/60">{day}</span>
+                  <span
+                    className="text-sm text-[#3fb950]/80 dark:text-[#3fb950]/60"
+                    style={{ fontFamily: '"Dokdo", cursive' }}
+                  >
+                    {day}
+                  </span>
                 </div>
                 <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">{description}</p>
                 <div className="mt-4 flex flex-wrap gap-1.5">
