@@ -4,6 +4,8 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Star } from 'lucide-react'
 import ComponentShowcase from '../showcase/ComponentShowcase.jsx'
+import QuickNotes from './QuickNotes.jsx'
+import Tag from './Tag.jsx'
 import { getLessonContent, hasLesson } from '../../lessons.js'
 
 function textFromChildren(children) {
@@ -256,6 +258,17 @@ export default function LessonView({ lessonList, lessonCategories, entries = [] 
             )}
           </nav>
 
+          {!isIndex && entry && (
+            <div className="mt-5">
+              <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{entry.description}</p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {entry.tags.map((tag) => (
+                  <Tag key={tag}>{tag}</Tag>
+                ))}
+              </div>
+            </div>
+          )}
+
           {!isIndex && entry?.prerequisites?.length > 0 && (
             <p className="mt-4 text-sm text-neutral-500 dark:text-neutral-400">
               <span className="font-medium text-neutral-700 dark:text-neutral-300">Builds on:</span>{' '}
@@ -278,6 +291,8 @@ export default function LessonView({ lessonList, lessonCategories, entries = [] 
               <p className="text-sm text-neutral-500">No lesson breakdown yet for this component.</p>
             )}
           </article>
+
+          {!isIndex && entry && <QuickNotes slug={slug} />}
         </div>
 
         {headings.length > 0 && (

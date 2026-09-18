@@ -1,11 +1,14 @@
 import { Fragment, useEffect, useState } from 'react'
 import { Star } from 'lucide-react'
-import { Link, Route, Routes, useParams } from 'react-router-dom'
+import { Link, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import ComponentShowcase from './components/showcase/ComponentShowcase.jsx'
 import LessonView from './components/lessons/LessonView.jsx'
 import ThemeToggle from './components/theme/ThemeToggle.jsx'
 import HeroShowcase from './components/hero/HeroShowcase.jsx'
 import AppLoader from './components/loader/AppLoader.jsx'
+import CardPreview from './components/lessons/CardPreview.jsx'
+import Tag from './components/lessons/Tag.jsx'
+import QuickNotes from './components/lessons/QuickNotes.jsx'
 import { buildLessonCategories, buildLessonList, hasLesson } from './lessons.js'
 
 // Auto-discovers every folder under src/components/ — each folder's .jsx file
@@ -30,14 +33,6 @@ const entries = Object.keys(metaModules)
     }
   })
   .sort((a, b) => a.day.localeCompare(b.day))
-
-function Tag({ children }) {
-  return (
-    <span className="rounded-md bg-neutral-100 px-2.5 py-1 text-xs text-neutral-600 dark:bg-neutral-900 dark:text-neutral-400">
-      {children}
-    </span>
-  )
-}
 
 const socialLinks = [
   {
@@ -178,23 +173,31 @@ function IndexGrid() {
                 <div className="col-span-full my-2 border-t border-neutral-200 dark:border-neutral-800" />
               )}
               <Link
-                to={`/components/${slug}`}
-                className="rounded-xl border border-neutral-200 bg-neutral-50 p-5 text-left transition-colors hover:border-neutral-300 hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900/40 dark:hover:border-neutral-700 dark:hover:bg-neutral-900"
+                to={`/lessons/${slug}`}
+                className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 text-left transition-all hover:-translate-y-0.5 hover:border-[#3fb950]/50 dark:border-neutral-800 dark:bg-neutral-900/40 dark:hover:border-[#3fb950]/40"
               >
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{name}</h2>
-                  <span
-                    className="text-sm text-[#3fb950]/80 dark:text-[#3fb950]/60"
-                    style={{ fontFamily: '"Dokdo", cursive' }}
-                  >
-                    {day}
-                  </span>
+                <div className="relative h-52 border-b border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950/60">
+                  <CardPreview
+                    day={day}
+                    Component={entries.find((e) => e.slug === slug).component}
+                  />
                 </div>
-                <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">{description}</p>
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {tags.map((tag) => (
-                    <Tag key={tag}>{tag}</Tag>
-                  ))}
+                <div className="p-5">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{name}</h2>
+                    <span
+                      className="text-sm text-[#3fb950]/80 dark:text-[#3fb950]/60"
+                      style={{ fontFamily: '"Dokdo", cursive' }}
+                    >
+                      {day}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">{description}</p>
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {tags.map((tag) => (
+                      <Tag key={tag}>{tag}</Tag>
+                    ))}
+                  </div>
                 </div>
               </Link>
             </Fragment>
@@ -207,54 +210,6 @@ function IndexGrid() {
           </p>
         )}
       </div>
-    </div>
-  )
-}
-
-function noteStorageKey(slug) {
-  return `component-lab:notes:${slug}`
-}
-
-function QuickNotes({ slug }) {
-  const [note, setNote] = useState('')
-  const [savedAt, setSavedAt] = useState(null)
-
-  useEffect(() => {
-    try {
-      setNote(localStorage.getItem(noteStorageKey(slug)) ?? '')
-    } catch {
-      setNote('')
-    }
-    setSavedAt(null)
-  }, [slug])
-
-  function handleChange(e) {
-    const value = e.target.value
-    setNote(value)
-    try {
-      localStorage.setItem(noteStorageKey(slug), value)
-      setSavedAt(new Date())
-    } catch {
-      // localStorage unavailable (private mode, disabled, etc.) — edits just won't persist.
-    }
-  }
-
-  return (
-    <div className="mt-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xs font-medium uppercase tracking-wide text-neutral-500">Quick Notes</h2>
-        {savedAt && <span className="text-xs text-neutral-500 dark:text-neutral-600">Saved</span>}
-      </div>
-      <textarea
-        value={note}
-        onChange={handleChange}
-        placeholder="Scratch thoughts, todos, what you'll do next..."
-        rows={8}
-        className="mt-2 w-full resize-y rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-neutral-300 focus:outline-none dark:border-neutral-800 dark:bg-neutral-900/40 dark:text-neutral-200 dark:placeholder:text-neutral-600 dark:focus:border-neutral-700"
-      />
-      <p className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-600">
-        Saved locally in this browser only — separate from notes.md.
-      </p>
     </div>
   )
 }
@@ -334,9 +289,20 @@ function DetailViewRoute() {
 const lessonList = buildLessonList(entries)
 const lessonCategories = buildLessonCategories(entries)
 
+// Keyed on pathname only, so the "On this page" #hash links (same path, new
+// hash) still jump to their heading instead of being reset to the top.
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
+
 export default function App() {
   return (
     <AppLoader>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<IndexGrid />} />
         <Route path="/components/:slug" element={<DetailViewRoute />} />
