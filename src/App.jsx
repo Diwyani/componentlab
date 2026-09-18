@@ -4,7 +4,6 @@ import { Link, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import ComponentShowcase from './components/showcase/ComponentShowcase.jsx'
 import LessonView from './components/lessons/LessonView.jsx'
 import ThemeToggle from './components/theme/ThemeToggle.jsx'
-import HeroShowcase from './components/hero/HeroShowcase.jsx'
 import AppLoader from './components/loader/AppLoader.jsx'
 import CardPreview from './components/lessons/CardPreview.jsx'
 import Tag from './components/lessons/Tag.jsx'
@@ -121,10 +120,34 @@ function IndexGrid() {
     activeFilter === null ? entries : entries.filter((e) => e.tags.some((t) => t.toLowerCase() === activeFilter))
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
-      <div className="mx-auto max-w-5xl px-6 py-16">
-        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-2">
+    <div
+      className="relative min-h-screen bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100"
+      onMouseMove={(e) => {
+        const r = e.currentTarget.getBoundingClientRect()
+        e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`)
+        e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`)
+      }}
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[size:40px_40px] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)]"
+        style={{
+          maskImage: 'linear-gradient(to bottom, black 0%, black 40%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 40%, transparent 100%)',
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.12)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.12)_1px,transparent_1px)] bg-[size:40px_40px] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.12)_1px,transparent_1px)]"
+        style={{
+          maskImage: 'radial-gradient(260px circle at var(--mx, -500px) var(--my, -500px), black, transparent)',
+          WebkitMaskImage: 'radial-gradient(260px circle at var(--mx, -500px) var(--my, -500px), black, transparent)',
+        }}
+      />
+      <div className="relative mx-auto max-w-5xl px-6 py-16">
+        <div className="text-left">
           <div>
+            <div className="max-w-xl">
             <p
               className="text-xs text-neutral-500 dark:text-neutral-400"
               style={{ fontFamily: '"Dokdo", cursive' }}
@@ -133,11 +156,12 @@ function IndexGrid() {
             </p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight">Component Lab</h1>
 
-            <p className="mt-4 max-w-xl text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+            <p className="mt-4 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
               There's a real gap for designers who want to learn to code: most resources assume you're starting from
               zero or already deep in engineering, nothing in between. The best way to learn anything is to get your
               hands dirty: build things, get stuck, sob a little, figure it out.
             </p>
+            </div>
 
             <div
               className="mt-4 flex flex-wrap items-center gap-5"
@@ -156,13 +180,9 @@ function IndexGrid() {
                 to="/lessons"
                 className="text-base text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
               >
-                Learn lesson
+                See docs
               </Link>
             </div>
-          </div>
-
-          <div>
-            <HeroShowcase />
           </div>
         </div>
 
@@ -170,28 +190,32 @@ function IndexGrid() {
           {filteredEntries.map(({ slug, day, name, description, tags }, index) => (
             <Fragment key={slug}>
               {index > 0 && index % 7 === 0 && (
-                <div className="col-span-full my-2 border-t border-neutral-200 dark:border-neutral-800" />
+                <div
+                  className="col-span-full my-2 h-px"
+                  style={{
+                    backgroundImage:
+                      'repeating-linear-gradient(to right, rgba(63,185,80,0.25) 0 14px, transparent 14px 24px)',
+                  }}
+                />
               )}
               <Link
                 to={`/lessons/${slug}`}
-                className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 text-left transition-all hover:-translate-y-0.5 hover:border-[#3fb950]/50 dark:border-neutral-800 dark:bg-neutral-900/40 dark:hover:border-[#3fb950]/40"
+                className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 text-left transition-all hover:-translate-y-0.5 hover:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-900/40 dark:hover:border-white/25"
               >
                 <div className="relative h-52 border-b border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950/60">
+                  <span
+                    className="absolute left-3 top-2 z-10 text-base text-[#3fb950]/80 dark:text-[#3fb950]/70"
+                    style={{ fontFamily: '"Dokdo", cursive' }}
+                  >
+                    {day}
+                  </span>
                   <CardPreview
                     day={day}
                     Component={entries.find((e) => e.slug === slug).component}
                   />
                 </div>
                 <div className="p-5">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{name}</h2>
-                    <span
-                      className="text-sm text-[#3fb950]/80 dark:text-[#3fb950]/60"
-                      style={{ fontFamily: '"Dokdo", cursive' }}
-                    >
-                      {day}
-                    </span>
-                  </div>
+                  <h2 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{name}</h2>
                   <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">{description}</p>
                   <div className="mt-4 flex flex-wrap gap-1.5">
                     {tags.map((tag) => (

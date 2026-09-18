@@ -201,7 +201,7 @@ export default function LessonView({ lessonList, lessonCategories, entries = [] 
 
       <div className="mx-auto flex min-h-screen max-w-7xl gap-8 px-6 py-16">
         <div className="hidden w-56 flex-none border-r border-neutral-200 pr-8 dark:border-neutral-800 lg:block">
-          <div className="sticky top-16">
+          <div className="sticky top-16 max-h-[calc(100vh-8rem)] overflow-y-auto overscroll-contain pb-8 pr-2 [scrollbar-width:thin]">
             <nav className="flex flex-col gap-0.5">
               <LessonLink slug="index" day={null} name="Index" isActive={isIndex} />
             </nav>
