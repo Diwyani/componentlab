@@ -1,4 +1,5 @@
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Star } from 'lucide-react'
 import { Link, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import ComponentShowcase from './components/showcase/ComponentShowcase.jsx'
@@ -45,7 +46,7 @@ const socialLinks = [
     ),
   },
   {
-    label: 'Twitter/X',
+    label: 'X',
     href: 'https://x.com/DiwyaniVajpayee',
     external: true,
     icon: (
@@ -67,23 +68,60 @@ const socialLinks = [
   },
 ]
 
+const TOOLTIP_DELAY = 500
+
 function SocialLinks() {
+  const [active, setActive] = useState(null)
+  const [warm, setWarm] = useState(false)
+  const timer = useRef(null)
+
+  function enter(label) {
+    clearTimeout(timer.current)
+    if (warm) {
+      setActive(label)
+      return
+    }
+    timer.current = setTimeout(() => {
+      setActive(label)
+      setWarm(true)
+    }, TOOLTIP_DELAY)
+  }
+
+  function leaveAll() {
+    clearTimeout(timer.current)
+    setActive(null)
+    setWarm(false)
+  }
+
+  useEffect(() => () => clearTimeout(timer.current), [])
+
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3" onMouseLeave={leaveAll}>
       {socialLinks.map(({ label, href, external, icon }) => (
-        <a
-          key={label}
-          href={href}
-          aria-label={label}
-          target={external ? '_blank' : undefined}
-          rel={external ? 'noopener noreferrer' : undefined}
-          // `brightness` is layered on top of the color transition so each
-          // icon reacts on its own hover, independent of its neighbors:
-          // darker in light mode, brighter in dark mode.
-          className="text-neutral-500 transition-all hover:text-neutral-900 hover:brightness-75 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:brightness-150"
-        >
-          {icon}
-        </a>
+        <div key={label} className="relative flex" onMouseEnter={() => enter(label)}>
+          <AnimatePresence>
+            {active === label && (
+              <motion.span
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 4 }}
+                transition={{ duration: warm ? 0.1 : 0.15 }}
+                className="pointer-events-none absolute bottom-full left-1/2 mb-3 -translate-x-1/2 whitespace-nowrap rounded-md border border-neutral-200 bg-white px-2 py-1 text-[11px] text-neutral-700 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300"
+              >
+                {label}
+              </motion.span>
+            )}
+          </AnimatePresence>
+          <a
+            href={href}
+            aria-label={label}
+            target={external ? '_blank' : undefined}
+            rel={external ? 'noopener noreferrer' : undefined}
+            className="text-neutral-500 transition-all hover:text-neutral-900 hover:brightness-75 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:brightness-150"
+          >
+            {icon}
+          </a>
+        </div>
       ))}
     </div>
   )
@@ -102,7 +140,10 @@ const filters = [
 function BottomBar() {
   return (
     <div className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full border border-neutral-200 bg-white/80 px-4 py-2 text-xs text-neutral-600 backdrop-blur transition-transform duration-200 hover:scale-105 dark:border-neutral-800 dark:bg-neutral-900/80 dark:text-neutral-400">
-      <span>
+      <span className="flex items-center gap-1.5">
+        <span className="text-base leading-none text-[#3fb950]" style={{ fontFamily: '"Dokdo", cursive' }}>
+          •
+        </span>
         {entries.length} Component{entries.length === 1 ? '' : 's'}
       </span>
       <span className="h-3.5 w-px bg-neutral-300 dark:bg-neutral-700" />
@@ -200,9 +241,9 @@ function IndexGrid() {
               )}
               <Link
                 to={`/lessons/${slug}`}
-                className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 text-left transition-all hover:-translate-y-0.5 hover:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-900/40 dark:hover:border-white/25"
+                className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 text-left transition-all hover:-translate-y-0.5 hover:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-white/25"
               >
-                <div className="relative h-52 border-b border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950/60">
+                <div className="relative h-52 border-b border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950">
                   <span
                     className="absolute left-3 top-2 z-10 text-base text-[#3fb950]/80 dark:text-[#3fb950]/70"
                     style={{ fontFamily: '"Dokdo", cursive' }}
