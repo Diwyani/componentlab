@@ -1,564 +1,123 @@
-A group of tabs where one tab is active at a time.
+## The idea
 
-The goal isn't just to make tabs. The goal is to understand how **React state can hold a value**, how [arrays](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) become UI using `.map()`, & how one piece of state can control multiple parts of the interface.
+A group of tabs where only one is active at a time. The goal isn't just to make tabs. It's to see that **state can hold a value**, not just on/off, and that one value can control many parts of the UI.
 
----
-
-## What are we building?
+In the Toggle Switch, state was `true` or `false`. Here it's a word: `"Commit"`, `"Analytics"` or `"Upgrade"`.
 
 ```text
-┌────────┬───────────┬────────┐
-│ Commit │ Analytics │ Upgrade│
-└────────┴───────────┴────────┘
-   ↑
- active
+activeTab = "Commit"  →  click Analytics  →  setActiveTab("Analytics")  →  re-render  →  Analytics is active
 ```
 
-When the user clicks Analytics:
+## How it works
 
-```text
-┌────────┬───────────┬────────┐
-│ Commit │ Analytics │ Upgrade│
-└────────┴───────────┴────────┘
-            ↑
-          active
-```
+### 01 Store the tabs in an array
 
-Only one tab is selected at a time.
+The tabs are a list of similar things, so they live in a [JavaScript array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array).
 
----
-
-## The mental model
-
-This time we don't need a boolean. We need to remember:
-
-> **which tab is selected?**
-
-So our state is:
-
-```jsx
-const [activeTab, setActiveTab] = useState("Commit");
-```
-
-The state contains a value:
-
-```text
-activeTab = "Commit"
-```
-
-After clicking Analytics:
-
-```text
-activeTab = "Analytics"
-```
-
-The flow is:
-
-```text
-activeTab = "Commit"
-       ↓
-render all tabs
-       ↓
-Commit is active
-       ↓
-user clicks Analytics
-       ↓
-setActiveTab("Analytics")
-       ↓
-activeTab = "Analytics"
-       ↓
-React re-renders
-       ↓
-Analytics is now active
-```
-
----
-
-## The important idea
-
-In the Toggle Switch, our state was:
-
-```text
-true / false
-```
-
-Here our state is:
-
-```text
-"Commit"
-"Analytics"
-"Upgrade"
-```
-
-So state doesn't always mean on/off. It can represent a **value**.
-
----
-
-## Step 1 — store the tab data
+- Instead of writing three `<button>`s by hand, we keep the labels in one place.
+- Add `"Settings"` to the array and a fourth tab appears on its own.
 
 ```jsx
 const tabs = ["Commit", "Analytics", "Upgrade"];
 ```
 
-This is a ==JavaScript array.==
+### 02 Remember which tab is active
 
-Instead of manually writing:
+One piece of state holds the name of the selected tab.
+
+- It starts on the first tab, `tabs[0]`, which is `"Commit"`.
+- We don't need `commitIsActive`, `analyticsIsActive`... One value already tells us everything.
 
 ```jsx
-<button>Commit</button>
-<button>Analytics</button>
-<button>Upgrade</button>
+const [activeTab, setActiveTab] = useState(tabs[0]);
 ```
 
-we can create the buttons from the array.
+### 03 Turn the array into buttons with .map()
 
----
+[`.map()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map) goes through the array and makes one button per item.
 
-## Step 2 — use `.map()`
+- This is JavaScript doing the work. React just renders the result.
+- `key={tab}` gives each button a name so React can tell them apart. This is a [React key](https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
 
 ```jsx
 {tabs.map((tab) => (
-  <button key={tab}>
+  <button key={tab} onClick={() => setActiveTab(tab)}>
     {tab}
   </button>
 ))}
 ```
 
-[`.map()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map) goes through an array and creates something for every item.
+### 04 Clicking sets the value
 
-So:
+Each button passes its own label to `setActiveTab`.
 
-```text
-["Commit", "Analytics", "Upgrade"]
-             ↓
-            map()
-             ↓
-┌────────┐ ┌───────────┐ ┌────────┐
-│ Commit │ │ Analytics │ │ Upgrade│
-└────────┘ └───────────┘ └────────┘
-```
-
-This is JavaScript doing the work. React is simply rendering the result.
-
----
-
-## Step 3 — why `key`?
-
-```jsx
-key={tab}
-```
-
-React needs a way to identify each item in a list.
-
-So:
-
-```text
-Commit → key "Commit"
-Analytics → key "Analytics"
-Upgrade → key "Upgrade"
-```
-
-This is a [React key](https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key). For simple static values like these, the tab itself can be the key.
-
----
-
-## Step 4 — clicking a tab changes state
+- `tab` comes from `.map()`, so the Analytics button calls `setActiveTab("Analytics")`.
+- The same line of code works for every tab.
 
 ```jsx
 onClick={() => setActiveTab(tab)}
 ```
 
-Notice that `tab` comes from `.map()`.
+### 05 Each tab asks "am I active?"
 
-When we're rendering:
+Every tab compares itself to the state with `===`.
 
-```text
-Commit
-```
-
-the click becomes:
+- `"Analytics" === "Commit"` is `false`, `"Analytics" === "Analytics"` is `true`.
+- `&&` renders the pill only when the answer is true. This is [conditional rendering](https://react.dev/learn/conditional-rendering).
+- A [ternary](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_operator) gives the active tab different text colour.
 
 ```jsx
-setActiveTab("Commit")
+{activeTab === tab && <motion.div layoutId="active-pill" />}
+
+<span className={activeTab === tab ? "text-black" : "text-neutral-400"}>
 ```
 
-For Analytics:
+### 06 Framer Motion slides the pill
 
-```jsx
-setActiveTab("Analytics")
-```
+Every active pill shares the same `layoutId`, so Framer Motion treats them as one thing that moved.
 
-For Upgrade:
-
-```jsx
-setActiveTab("Upgrade")
-```
-
-So the same component logic works for every tab.
-
----
-
-## Step 5 — determine which tab is active
-
-We can ask:
-
-```jsx
-activeTab === tab
-```
-
-This is a comparison.
-
-For example:
-
-```text
-activeTab = "Analytics"
-tab = "Commit"
-
-"Analytics" === "Commit"
-        ↓
-      false
-```
-
-But:
-
-```text
-activeTab = "Analytics"
-tab = "Analytics"
-
-"Analytics" === "Analytics"
-        ↓
-       true
-```
-
-So every tab can figure out whether **it** is active.
-
----
-
-## Step 6 — conditional rendering
-
-We can use:
-
-```jsx
-{activeTab === tab && (
-  <motion.div />
-)}
-```
-
-This uses `&&` for [conditional rendering](https://react.dev/learn/conditional-rendering).
-
-Read it as:
-
-> if this tab is active, render the active pill.
-
-So:
-
-```text
-Commit
-   ↓
-is it active?
-   ↓
-yes → render pill
-no  → don't render pill
-```
-
----
-
-## Step 7 — conditional styling
-
-We can also change the text:
-
-```jsx
-activeTab === tab
-  ? "text-black"
-  : "text-neutral-400"
-```
-
-This is the [ternary operator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_operator).
-
-So the active tab gets one style & the inactive tabs get another.
-
----
-
-## Step 8 — Framer Motion
-
-The active background uses:
+- React removes the pill from Commit and adds one to Analytics.
+- Framer Motion sees the same `layoutId` and animates it sliding across instead of vanishing and reappearing.
+- You'll see this shared-identity idea again in Card Expand and Image Gallery.
 
 ```jsx
 <motion.div
   layoutId="active-pill"
+  transition={{ type: "spring", stiffness: 500, damping: 35 }}
 />
 ```
 
-Every active tab renders a pill with the same:
+## What belongs to what
 
-```text
-layoutId = "active-pill"
-```
-
-When the active tab changes:
-
-```text
-Commit
-   ↓
-Analytics
-```
-
-React changes which pill exists.
-
-Framer Motion sees the same `layoutId` move from one tab to another.
-
-So instead of:
-
-```text
-pill disappears
-pill appears
-```
-
-it visually becomes:
-
-```text
-pill
- ↓
-moves
- ↓
-new tab
-```
-
-This is the same **shared visual identity** idea you'll see later in Card Expand & Image Gallery.
-
----
-
-## What belongs to what?
-
-### React
-
-- `useState`
-    
-- state
-    
-- event handlers
-    
-- `.map()` rendering
-    
-- conditional rendering
-    
-- `key`
-    
-
-### JavaScript
-
-- arrays
-    
-- `.map()`
-    
-- `===`
-    
-- arrow functions
-    
-
-### Tailwind
-
-- spacing
-    
-- colours
-    
-- positioning
-    
-- `relative`
-    
-- `absolute`
-    
-- `z-10`
-    
-
-### Framer Motion
-
-- `motion.div`
-    
-- `layoutId`
-    
-- `transition`
-    
-
----
-
-## The code
-
-```jsx
-import { useState } from "react";
-import { motion } from "framer-motion";
-
-const tabs = ["Commit", "Analytics", "Upgrade"];
-
-export default function TabSwitcher() {
-  const [activeTab, setActiveTab] = useState(tabs[0]);
-
-  return (
-    <div className="flex w-fit gap-2 rounded-full bg-neutral-800 p-1">
-      {tabs.map((tab) => (
-        <button
-          key={tab}
-          onClick={() => setActiveTab(tab)}
-          className="relative rounded-full px-4 py-2 text-sm font-medium"
-        >
-          {activeTab === tab && (
-            <motion.div
-              layoutId="active-pill"
-              className="absolute inset-0 rounded-full bg-white"
-              transition={{
-                type: "spring",
-                stiffness: 500,
-                damping: 35,
-              }}
-            />
-          )}
-
-          <span
-            className={`relative z-10 ${
-              activeTab === tab
-                ? "text-black"
-                : "text-neutral-400"
-            }`}
-          >
-            {tab}
-          </span>
-        </button>
-      ))}
-    </div>
-  );
-}
-```
-
----
+- **React**: `useState`, event handlers, `.map()` rendering, conditional rendering, `key`
+- **JavaScript**: arrays, `.map()`, `===`, arrow functions
+- **Tailwind**: spacing, colours, `relative`, `absolute`, `z-10`
+- **Framer Motion**: `motion.div`, `layoutId`, `transition`
 
 ## Things to understand
 
-### Why use an array?
-
-Because the tabs are a collection of similar things.
-
-```text
-tabs
- ↓
-map()
- ↓
-buttons
-```
-
-If we add:
-
-```jsx
-"Settings"
-```
-
-to the array, another tab automatically appears.
-
----
-
 ### Why only one piece of state?
 
-We could theoretically have:
-
-```text
-commitIsActive
-analyticsIsActive
-upgradeIsActive
-```
-
-But that creates unnecessary state.
-
-Instead:
-
-```text
-activeTab = "Analytics"
-```
-
-already tells us everything we need.
-
-Every tab can derive:
-
-```text
-am I active?
-```
-
-from that value.
-
----
+`activeTab = "Analytics"` already tells every tab whether it is active. Three booleans would be extra state that could get out of sync.
 
 ### Does `layoutId` select the tab?
 
-No.
-
-React state selects the tab:
-
-```jsx
-setActiveTab(tab)
-```
-
-`layoutId` only helps Framer Motion animate the active indicator between tabs.
-
----
+No. React state selects the tab with `setActiveTab(tab)`. `layoutId` only helps Framer Motion animate the indicator between tabs.
 
 ## Try changing it
 
 1. Add a fourth tab.
-    
-2. Change the active indicator from a pill to an underline.
-    
+2. Change the pill into an underline.
 3. Make the tabs vertical.
-    
 4. Add an icon to each tab.
-    
-5. Change the animation from spring to tween.
-    
-6. Remove `layoutId` & see what changes.
-    
-7. Replace the strings with objects:
-    
+5. Change the spring to a tween.
+6. Remove `layoutId` and see what changes.
+7. Turn the strings into objects like `{ label: "Commit", icon: "..." }`. Now you're changing the **data structure**, not just the styling.
 
-```jsx
-const tabs = [
-  { label: "Commit", icon: "..." },
-  { label: "Analytics", icon: "..." },
-  { label: "Upgrade", icon: "..." },
-];
-```
-
-This is a good exercise because you're now changing the **data structure**, not just the styling.
-
----
-
-## What this component teaches
-
-The bigger pattern is:
-
-```text
-data
- ↓
-.map()
- ↓
-UI
-```
-
-combined with:
-
-```text
-selected value
- ↓
-compare with each item
- ↓
-derive active state
- ↓
-change UI
-```
-
----
-
-## Next concepts
+## Read next
 
 - [Rendering lists](https://react.dev/learn/rendering-lists)
-- [JavaScript `map()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map)
+- [JavaScript map()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map)
 - [Conditional rendering](https://react.dev/learn/conditional-rendering)
-- [React state](https://react.dev/learn/state-a-components-memory)
 - [React keys](https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key)
-- [JavaScript strict equality](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Strict_equality)
+- [Strict equality](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Strict_equality)

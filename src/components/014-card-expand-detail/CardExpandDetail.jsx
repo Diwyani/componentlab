@@ -10,7 +10,7 @@ const card = {
     "Ship the progress stepper, fix the drawer's controlled-props issue, and start the drag-to-reorder list. Remember to update meta.js descriptions before Friday.",
 };
 
-export default function CardExpandDetail({ autoPlay = false }) {
+export default function CardExpandDetail({ autoPlay = false, onStateChange }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
@@ -18,6 +18,10 @@ export default function CardExpandDetail({ autoPlay = false }) {
     const timer = setTimeout(() => setIsExpanded(true), 300);
     return () => clearTimeout(timer);
   }, [autoPlay]);
+
+  useEffect(() => {
+    onStateChange?.({ isExpanded });
+  }, [isExpanded, onStateChange]);
 
   return (
     <div className="relative flex w-80 items-center justify-center">

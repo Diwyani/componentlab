@@ -1,667 +1,133 @@
-A toast is a small temporary notification that appears after an action.
+## The idea
 
-For example:
-
-```text
-┌─────────────────────────────┐
-│ ✓ Changes saved             │
-└─────────────────────────────┘
-```
-
-The goal isn't just to make a notification. This component introduces an important new idea:
+A small notification that pops up after an action and disappears after 3 seconds. Several can be on screen at once. The new idea:
 
 > **state can be an array of objects.**
 
----
-
-## What are we building?
-
-Clicking a button creates a toast.
+So far state has been a boolean (Toggle), a string (Tabs) and a number (Accordion). Here it's a whole collection.
 
 ```text
-click
- ↓
-┌─────────────────────────────┐
-│ Changes saved successfully  │
-└─────────────────────────────┘
+click  →  add a toast object to the array  →  re-render  →  .map() draws it  →  3s later filter it out  →  it animates away
 ```
 
-After three seconds, it disappears.
+## How it works
 
-Multiple toasts can exist at the same time.
+### 01 Start with an empty array
 
-```text
-┌─────────────────────────────┐
-│ Changes saved               │
-└─────────────────────────────┘
-┌─────────────────────────────┐
-│ Profile updated             │
-└─────────────────────────────┘
-┌─────────────────────────────┐
-│ Settings saved              │
-└─────────────────────────────┘
-```
+The state holds every toast currently on screen.
 
----
-
-## The mental model
-
-Our state is not a boolean.
-
-It is an array:
+- `[]` means there are no toasts.
+- After one click it holds one object, after three clicks, three.
 
 ```jsx
 const [toasts, setToasts] = useState([]);
 ```
 
-Initially:
+### 02 Create a toast with a unique id
 
-```text
-toasts = []
-```
+Each toast is an object with an `id` and a `message`.
 
-No notifications exist.
-
-After clicking:
-
-```text
-toasts = [
-  {
-    id: 123,
-    message: "Changes saved successfully"
-  }
-]
-```
-
-Click again:
-
-```text
-toasts = [
-  {
-    id: 123,
-    message: "Changes saved successfully"
-  },
-  {
-    id: 124,
-    message: "Changes saved successfully"
-  }
-]
-```
-
-So the state represents the **current collection of toasts**.
-
----
-
-## The complete flow
-
-```text
-user clicks
-     ↓
-create a toast object
-     ↓
-add object to toasts array
-     ↓
-React re-renders
-     ↓
-.map() creates a UI element
-     ↓
-toast appears
-     ↓
-3 seconds pass
-     ↓
-remove that toast from array
-     ↓
-React re-renders
-     ↓
-AnimatePresence plays exit animation
-```
-
----
-
-## Step 1 — array state
-
-```jsx
-const [toasts, setToasts] = useState([]);
-```
-
-The initial value is an empty array.
-
-This means:
-
-> currently, there are no toasts.
-
-This is different from our previous components.
-
-```text
-Toggle
-state → boolean
-
-
-Tabs
-state → string
-
-
-Accordion
-state → number/null
-
-
-Toast
-state → array
-```
-
----
-
-## Step 2 — create a toast
+- `Date.now()` gives the current time in milliseconds, which works as a simple unique id.
+- The id is how we'll find this exact toast again when it's time to remove it.
 
 ```jsx
 function addToast() {
   const id = Date.now();
-
-  setToasts((prev) => [
-    ...prev,
-    {
-      id,
-      message: "Changes saved successfully",
-    },
-  ]);
-}
+  setToasts((prev) => [...prev, { id, message: "Changes saved successfully" }]);
 ```
 
-First:
+### 03 Add it without changing the old array
+
+`[...prev, newToast]` builds a **new** array: everything from before, plus the new one.
+
+- `...` is [spread syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax): if `prev` is `[A, B]`, then `[...prev, C]` is `[A, B, C]`.
+- `prev` is the latest value of the state, so quick clicks never lose a toast.
+- We don't use `push()`: React state should be replaced, not edited in place.
 
 ```jsx
-const id = Date.now();
+setToasts((prev) => [...prev, newToast]);
 ```
 
-We create an identifier.
+### 04 Draw every toast with .map()
 
-We need this because each toast needs to be distinguishable from the others.
+Each object in the array becomes one notification on screen.
 
----
-
-## Step 3 — the spread operator
-
-This part is important:
-
-```jsx
-[
-  ...prev,
-  newToast
-]
-```
-
-The `...` is the [spread syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax).
-
-If:
-
-```text
-prev = [A, B]
-```
-
-then:
-
-```jsx
-[...prev, C]
-```
-
-creates:
-
-```text
-[A, B, C]
-```
-
-We are creating a **new array** rather than changing the existing one directly.
-
-This is an important React pattern.
-
----
-
-## Step 4 — why `prev`?
-
-```jsx
-setToasts((prev) => ...)
-```
-
-`prev` is the previous value of `toasts`.
-
-We're using it because the new array depends on the previous array.
-
-```text
-previous toasts
-      ↓
-add another toast
-      ↓
-new toasts
-```
-
----
-
-## Step 5 — render the toasts
+- `key={toast.id}` gives each toast a stable identity, which matters when one is removed from the middle.
 
 ```jsx
 {toasts.map((toast) => (
-  <motion.div key={toast.id}>
-    {toast.message}
-  </motion.div>
+  <motion.div key={toast.id}>{toast.message}</motion.div>
 ))}
 ```
 
-Again, `.map()` converts data into UI.
+### 05 Remove it after 3 seconds
 
-```text
-toasts array
-    ↓
-.map()
-    ↓
-toast UI
-toast UI
-toast UI
-```
+A timer removes this toast by keeping every toast **except** this one.
 
-Each object becomes one visual notification.
-
----
-
-## Step 6 — why the key?
-
-```jsx
-key={toast.id}
-```
-
-React needs to distinguish between the toast items.
-
-Imagine:
-
-```text
-Toast A → id 123
-Toast B → id 124
-Toast C → id 125
-```
-
-The IDs give React stable identities.
-
-This becomes particularly important when we remove one item.
-
----
-
-## Step 7 — remove a toast
-
-When we create a toast, we also start a timer:
+- [`filter()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter) returns a new array of the items that pass the test.
+- `[A, B, C]` filtered with `toast.id !== B.id` becomes `[A, C]`.
 
 ```jsx
 setTimeout(() => {
-  setToasts((prev) =>
-    prev.filter((toast) => toast.id !== id)
-  );
+  setToasts((prev) => prev.filter((toast) => toast.id !== id));
 }, 3000);
 ```
 
-After three seconds we remove the toast.
+### 06 Animate in, out, and closing the gap
 
-The important part is:
+`AnimatePresence` lets a removed toast slide out before it disappears.
 
-```jsx
-filter((toast) => toast.id !== id)
-```
-
-[`filter()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter) creates a new array containing only the items that pass the condition.
-
-So if:
-
-```text
-toasts = [A, B, C]
-```
-
-and we want to remove B:
-
-```text
-toast.id !== B.id
-```
-
-gives:
-
-```text
-[A, C]
-```
-
----
-
-## Step 8 — React notices the array changed
-
-Before:
-
-```text
-[A, B, C]
-```
-
-After:
-
-```text
-[A, C]
-```
-
-React re-renders.
-
-`.map()` now only renders:
-
-```text
-A
-C
-```
-
-B is no longer rendered.
-
----
-
-## Step 9 — AnimatePresence
-
-Because the toast is disappearing:
+- `initial` / `animate`: new toasts rise up and fade in.
+- `exit`: removed toasts slide off to the right.
+- `layout`: the remaining toasts glide into the gap instead of jumping.
 
 ```jsx
 <AnimatePresence>
+  {toasts.map((toast) => (
+    <motion.div
+      key={toast.id}
+      layout
+      initial={{ opacity: 0, y: 20, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 100, scale: 0.9 }}
+    />
+  ))}
+</AnimatePresence>
 ```
 
-allows Framer Motion to play its exit animation.
+## What belongs to what
 
-So:
-
-```text
-toast removed from state
-       ↓
-React stops rendering it
-       ↓
-AnimatePresence
-       ↓
-exit animation
-       ↓
-toast disappears
-```
-
----
-
-## What belongs to what?
-
-### React
-
-- `useState`
-    
-- array state
-    
-- event handlers
-    
-- re-render
-    
-- `key`
-    
-
-### JavaScript
-
-- arrays
-    
-- objects
-    
-- spread syntax
-    
-- `.map()`
-    
-- `.filter()`
-    
-- `Date.now()`
-    
-- `setTimeout`
-    
-
-### Framer Motion
-
-- `motion`
-    
-- `AnimatePresence`
-    
-- `layout`
-    
-- `initial`
-    
-- `animate`
-    
-- `exit`
-    
-
-### Tailwind
-
-- positioning
-    
-- spacing
-    
-- sizing
-    
-- colours
-    
-- typography
-    
-
----
-
-## The code
-
-```jsx
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-
-export default function ToastDemo() {
-  const [toasts, setToasts] = useState([]);
-
-  function addToast() {
-    const id = Date.now();
-
-    setToasts((prev) => [
-      ...prev,
-      {
-        id,
-        message: "Changes saved successfully",
-      },
-    ]);
-
-    setTimeout(() => {
-      setToasts((prev) =>
-        prev.filter((toast) => toast.id !== id)
-      );
-    }, 3000);
-  }
-
-  return (
-    <div>
-      <button
-        onClick={addToast}
-        className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black"
-      >
-        Save changes
-      </button>
-
-      <div className="fixed bottom-6 right-6 z-50 flex w-80 flex-col gap-2">
-        <AnimatePresence>
-          {toasts.map((toast) => (
-            <motion.div
-              key={toast.id}
-              layout
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              className="rounded-lg bg-neutral-800 px-4 py-3 text-sm text-white shadow-xl"
-            >
-              {toast.message}
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-    </div>
-  );
-}
-```
-
----
+- **React**: `useState` with an array, event handlers, `key`, re-render
+- **JavaScript**: arrays, objects, spread `...`, `.map()`, `.filter()`, `Date.now()`, `setTimeout`
+- **Tailwind**: `fixed` positioning, spacing, colours, shadows
+- **Framer Motion**: `AnimatePresence`, `layout`, `initial`, `animate`, `exit`
 
 ## Things to understand
 
-### Why is the state an array?
+### Why not a boolean like `isToastVisible`?
 
-Because multiple toasts can exist.
+It only answers yes or no. It can't say how many toasts there are, what they say, or which one should leave next. The array holds all of that.
 
-```text
-one toast
+### Why not `prev.push(newToast)`?
 
-[toast]
+`push` changes the existing array. React compares old and new values to decide whether to re-render, so always hand it a new array.
 
+### Where else does this pattern show up?
 
-three toasts
-
-[toast, toast, toast]
-```
-
-The array represents the current collection.
-
----
-
-### Why not just use `isToastVisible`?
-
-That would only tell us:
-
-```text
-yes/no
-```
-
-It wouldn't tell us:
-
-```text
-how many?
-which ones?
-what message?
-which one should disappear?
-```
-
-The array gives us all that information.
-
----
-
-### Why don't we use `push()`?
-
-You might be tempted to do:
-
-```jsx
-prev.push(newToast)
-```
-
-But React state should generally be treated as immutable.
-
-Instead, create a new array:
-
-```jsx
-[...prev, newToast]
-```
-
-This gives React a new value to work with.
-
----
-
-### Why do we use `filter()` to remove the toast?
-
-Because we don't want to mutate the existing array.
-
-We create a new array containing everything **except** the toast we want to remove.
-
----
+Everywhere: messages, cart items, comments, tasks, search results. An array in state, `.map()` to draw it.
 
 ## Try changing it
 
 1. Add different messages.
-    
-2. Add a `type` property:
-    
+2. Add a `type` like `"success"` or `"error"` and style each type differently. This is **data driving UI**.
+3. Add a close button on each toast.
+4. Give each toast its own duration.
+5. Show the newest toast on top.
+6. Keep a maximum of 3 on screen.
 
-```jsx
-{
-  id,
-  type: "success",
-  message: "Saved!"
-}
-```
+## Read next
 
-3. Add error & warning toasts.
-    
-4. Add a close button.
-    
-5. Give each toast a different duration.
-    
-6. Add a progress bar showing the remaining time.
-    
-7. Make the newest toast appear at the top.
-    
-8. Add a maximum of 3 visible toasts.
-    
-
-The important exercise is adding a `type`.
-
-You will then have to think about:
-
-```text
-toast.type
-     ↓
-what should this particular toast look like?
-```
-
-That's another example of **data driving UI**.
-
----
-
-## What this component teaches
-
-The bigger pattern is:
-
-```text
-data stored in state
-       ↓
-.map()
-       ↓
-UI
-```
-
-And when the data changes:
-
-```text
-array changes
-     ↓
-React re-renders
-     ↓
-UI reflects the new array
-```
-
-This pattern is everywhere in real applications:
-
-```text
-notifications
-messages
-shopping cart items
-comments
-tasks
-search results
-table rows
-```
-
----
-
-## Next concepts
-
-- [Rendering lists](https://react.dev/learn/rendering-lists)
-    
-- [React state](https://react.dev/learn/state-a-components-memory)
-    
 - [Updating arrays in state](https://react.dev/learn/updating-arrays-in-state)
-    
-- [JavaScript `map()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map)
-    
-- [JavaScript `filter()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter)
-    
-- [JavaScript spread syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)
-    
-- [JavaScript `Date.now()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now)
-    
-- [React keys](https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key)
+- [Rendering lists](https://react.dev/learn/rendering-lists)
+- [Array filter()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter)
+- [Spread syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)

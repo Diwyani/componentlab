@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function SkeletonLoader() {
+export default function SkeletonLoader({ onStateChange }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -11,6 +11,10 @@ export default function SkeletonLoader() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    onStateChange?.({ isLoading });
+  }, [isLoading, onStateChange]);
 
   return (
     <div className="w-72 rounded-xl bg-neutral-100 dark:bg-neutral-800 p-4">

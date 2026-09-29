@@ -1,607 +1,99 @@
-# Drag Reorder List
+## The idea
 
-A list where the user can drag items up & down to change their order. This component is important because the state is no longer just controlling whether something is open or closed.
+A list you can drag up and down to change the order. The state here isn't open/closed any more:
 
-**The state represents actual data that changes.**
+> **The state is actual data, and the drag changes that data.**
 
----
-
-## What are we building?
-
-A list where:
-
-- items can be dragged vertically
-- dragging changes their order
-- the new order becomes React state
-- the UI re-renders using the new order
-- Framer Motion handles the dragging interaction
-
-
----
-
-## Mental model
+You never tell the list "move C above A". The drag produces a new array, and React draws whatever the array says.
 
 ```text
-             DRAG REORDER LIST
-                     │
-                     ▼
-          items = [A, B, C, D]
-                     │
-                     ▼
-              React renders
-                     │
-                user drags C
-                     │
-                     ▼
-          Framer Motion detects
-              new position
-                     │
-                     ▼
-             onReorder(newItems)
-                     │
-                     ▼
-              setItems(newItems)
-                     │
-                     ▼
-              React re-renders
-                     │
-                     ▼
-          items = [C, A, B, D]
-                     │
-                     ▼
-              new order shown
+items = [A, B, C, D]  →  drag C to the top  →  onReorder([C, A, B, D])  →  setItems  →  re-render
 ```
 
-The important idea:
+## How it works
 
-> **The drag interaction changes the data.**
+### 01 The list lives in state
 
----
+The order of the items is the state.
 
-## The code
+- It starts from a plain array of strings.
+- Whatever order this array is in is the order on screen.
 
 ```jsx
-import { useState } from "react";
-import { Reorder } from "framer-motion";
+const initialItems = ["Write daily component", "Review pull requests", "Ship the release", "Reply to feedback"];
 
-const initialItems = [
-  "Write daily component",
-  "Review pull requests",
-  "Ship the release",
-  "Reply to feedback",
-];
-
-export default function DragReorderList() {
-  const [items, setItems] = useState(initialItems);
-
-  return (
-    <Reorder.Group
-      axis="y"
-      values={items}
-      onReorder={setItems}
-      className="flex w-72 flex-col gap-2"
-    >
-      {items.map((item) => (
-        <Reorder.Item
-          key={item}
-          value={item}
-          whileDrag={{
-            scale: 1.03,
-            boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-          }}
-          className="cursor-grab rounded-lg bg-neutral-800 px-4 py-3 text-sm text-neutral-200 active:cursor-grabbing"
-        >
-          {item}
-        </Reorder.Item>
-      ))}
-    </Reorder.Group>
-  );
-}
-```
-
----
-
-## 1. The initial data
-
-```jsx
-const initialItems = [
-  "Write daily component",
-  "Review pull requests",
-  "Ship the release",
-  "Reply to feedback",
-];
-```
-
-This is just JavaScript.
-
-It's an array.
-
-At the beginning:
-
-```text
-[A, B, C, D]
-```
-
-The order matters.
-
----
-
-## 2. Store the order in state
-
-```jsx
 const [items, setItems] = useState(initialItems);
 ```
 
-Now React owns the current order.
+### 02 Reorder.Group watches the drag
 
-Initially:
+Framer Motion's `Reorder.Group` handles all the dragging maths for us.
 
-```text
-items
-↓
-[A, B, C, D]
-```
-
-After dragging:
-
-```text
-items
-↓
-[C, A, B, D]
-```
-
-This is different from something like:
+- `axis="y"`: items move up and down only.
+- `values={items}`: the current order.
+- `onReorder={setItems}`: when the order changes, hand the new array straight to our state setter.
 
 ```jsx
-const [isOpen, setIsOpen] = useState(false);
+<Reorder.Group axis="y" values={items} onReorder={setItems}>
 ```
 
-There, state represented a UI condition.
+### 03 Each item knows its value
 
-Here, state represents **actual application data**.
+`.map()` turns every string into a draggable `Reorder.Item`.
 
----
-
-## 3. `Reorder.Group`
+- `value={item}` tells the group which piece of data this row is.
+- `key={item}` lets React keep track of each row as it moves.
 
 ```jsx
-<Reorder.Group
-  axis="y"
-  values={items}
-  onReorder={setItems}
->
-```
-
-This is Framer Motion's reorder container.
-
-It needs to know:
-
-### Which direction?
-
-```jsx
-axis="y"
-```
-
-Vertical.
-
-### What is the current order?
-
-```jsx
-values={items}
-```
-
-We give it the current array.
-
-### What should happen when the order changes?
-
-```jsx
-onReorder={setItems}
-```
-
-This is the most important line.
-
-It means:
-
-> When the user creates a new order, put that new order into React state.
-
----
-
-## 4. Why is `onReorder={setItems}` so powerful?
-
-Usually you see:
-
-```jsx
-onClick={() => setSomething(...)}
-```
-
-Here we're passing the state setter directly:
-
-```jsx
-onReorder={setItems}
-```
-
-Framer Motion calls it with the new array.
-
-Conceptually:
-
-```text
-Framer Motion
-      ↓
-new order detected
-      ↓
-setItems(newOrder)
-      ↓
-React state changes
-      ↓
-React re-renders
-```
-
-So Framer Motion doesn't permanently "own" the order.
-
-React does.
-
----
-
-## 5. `.map()` renders the items
-
-```jsx
-items.map((item) => (
-  <Reorder.Item>
+{items.map((item) => (
+  <Reorder.Item key={item} value={item}>
     {item}
   </Reorder.Item>
-))
+))}
 ```
 
-If:
+### 04 Feedback while dragging
+
+`whileDrag` styles the item only while it's being held.
+
+- It grows slightly and gets a shadow, so it feels lifted off the list.
+- `cursor-grab` / `active:cursor-grabbing` show a hand that grips on press.
 
 ```jsx
-items = ["A", "B", "C"]
+<Reorder.Item
+  whileDrag={{ scale: 1.03, boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
+  className="cursor-grab active:cursor-grabbing"
+/>
 ```
 
-then React renders:
-
-```text
-A
-B
-C
-```
-
-If the state changes to:
-
-```jsx
-items = ["C", "A", "B"]
-```
-
-the same `.map()` now renders:
-
-```text
-C
-A
-B
-```
-
-This is why the UI follows the state.
-
----
-
-## 6. `Reorder.Item`
-
-Each item is wrapped in:
-
-```jsx
-<Reorder.Item>
-```
-
-This tells Framer Motion:
-
-> This is one reorderable item inside the group.
-
-We give it:
-
-```jsx
-value={item}
-```
-
-The value identifies what this item represents.
-
-And:
-
-```jsx
-key={item}
-```
-
-gives React the item's identity.
-
----
-
-## 7. `key` vs `value`
-
-These look similar but have different jobs.
-
-```jsx
-key={item}
-```
-
-is for **React**.
-
-It helps React identify list elements.
-
-```jsx
-value={item}
-```
-
-is for **Framer Motion's reorder system**.
-
-It tells the reorder system what value belongs to that item.
-
-Think:
-
-```text
-key
-↓
-React identity
-
-value
-↓
-reorder identity
-```
-
----
-
-## 8. `whileDrag`
-
-```jsx
-whileDrag={{
-  scale: 1.03,
-  boxShadow: "...",
-}}
-```
-
-This is purely visual feedback.
-
-While the user is dragging:
-
-```text
-normal
- ↓
-slightly larger
- ↓
-shadow appears
-```
-
-This doesn't change the actual data.
-
-It just makes the interaction feel better.
-
----
-
-## 9. What happens when you drag?
-
-Imagine:
-
-```text
-A
-B
-C
-D
-```
-
-You drag C above A.
-
-Framer Motion detects:
-
-```text
-C
-A
-B
-D
-```
-
-Then:
-
-```text
-onReorder(newItems)
-        ↓
-setItems(newItems)
-        ↓
-React state changes
-        ↓
-React re-renders
-        ↓
-items.map(...)
-        ↓
-C
-A
-B
-D
-```
-
-That is the complete loop.
-
----
-
-## React vs Framer Motion
-
-This distinction is important.
-
-### React
-
-Owns:
-
-```text
-current order
-state
-rendering
-data
-```
-
-### Framer Motion
-
-Owns:
-
-```text
-drag interaction
-position
-movement
-reordering mechanics
-drag animation
-```
-
-### JavaScript
-
-Owns:
-
-```text
-array
-.map()
-data manipulation
-```
-
-### Tailwind
-
-Owns:
-
-```text
-layout
-spacing
-colors
-cursor
-visual styling
-```
-
----
-
-## The full architecture
-
-```text
-              initialItems
-                   │
-                   ▼
-             React state
-               items
-                   │
-                   ▼
-             Reorder.Group
-                   │
-                   ▼
-                .map()
-                   │
-                   ▼
-             Reorder.Item
-                   │
-              user drags
-                   │
-                   ▼
-           Framer Motion
-                   │
-                   ▼
-             new order
-                   │
-                   ▼
-             setItems()
-                   │
-                   ▼
-             React state
-                   │
-                   └──────────→ re-render
-```
-
----
+## What belongs to what
+
+- **React**: array state, `.map()`, `key`, passing a setter as a callback
+- **JavaScript**: arrays, strings
+- **Tailwind**: `flex-col`, `gap-2`, `cursor-grab`, `active:cursor-grabbing`
+- **Framer Motion**: `Reorder.Group`, `Reorder.Item`, `axis`, `values`, `value`, `whileDrag`
 
 ## Things to understand
 
-Make sure these concepts are clear:
+### Why can we pass `setItems` directly to `onReorder`?
 
-- array state
-- `.map()`
-- `key`
-- state representing data
-- passing a state setter as a callback
-- controlled data flow
-- Framer Motion `Reorder.Group`
-- `Reorder.Item`
-- `axis`
-- `value`
-- `whileDrag`
+`onReorder` calls whatever function you give it with the new array. `setItems` is a function that takes a new array. They fit together exactly.
 
----
+### What does "the UI is a representation of state" mean here?
+
+The screen always shows the current array, nothing more. Change the array (by dragging or by code) and the list follows.
 
 ## Try changing it
 
 1. Add 5 more items.
-2. Change the list from tasks to favourite movies.
-3. Add an ID to each item.
-4. Add a delete button.
-5. Add a checkbox for completed tasks.
-6. Make completed tasks look different.
-7. Try storing objects instead of strings:
+2. Turn the tasks into favourite movies.
+3. Add a delete button to each row.
+4. Store objects instead of strings, like `{ id: 1, title: "Write daily component", completed: false }`, and render `item.title`. Real apps rarely store plain strings.
+5. Add a checkbox and style completed tasks differently.
 
+## Read next
 
-```jsx
-const initialItems = [
-  {
-    id: 1,
-    title: "Write daily component",
-    completed: false,
-  },
-];
-```
-
-Then render:
-
-```jsx
-{item.title}
-```
-
-This is a particularly useful exercise because real applications rarely contain only strings.
-
----
-
-## What this component teaches
-
-This is where you should start seeing an important React pattern:
-
-```text
-STATE
-  ↓
-UI
-  ↓
-USER INTERACTION
-  ↓
-STATE CHANGES
-  ↓
-UI UPDATES
-```
-
-React is essentially maintaining this relationship:
-
-> **The UI is a representation of the current state.**
-
-You don't manually tell the list:
-
-> "Move C above A."
-
-Instead, the interaction produces new data:
-
-```text
-[A, B, C, D]
-        ↓
-[C, A, B, D]
-```
-
-React then renders whatever the current data says.
-
----
-
-## Next concepts
-
-This naturally leads into:
-
-- props
-- callbacks
-- lifting state up
-- immutable updates
-- objects inside arrays
-- controlled components
-- derived state
-- reusable list components
+- [Updating arrays in state](https://react.dev/learn/updating-arrays-in-state)
+- [Rendering lists](https://react.dev/learn/rendering-lists)
+- [Framer Motion Reorder](https://motion.dev/docs/react-reorder)
+- [Sharing state between components](https://react.dev/learn/sharing-state-between-components)

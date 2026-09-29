@@ -1,600 +1,110 @@
-A gallery where clicking a thumbnail opens a larger version of that same image.
+## The idea
 
-This component is useful for understanding **selected state, derived data, conditional rendering, `find()`, & Framer Motion's `layoutId`**.
+A grid of thumbnails. Click one and that same image grows into a large view, click the backdrop and it shrinks back. The key principle:
 
----
+> **Don't store something in state if you can calculate it from existing state.**
 
-## What are we building?
-
-A gallery with:
-
-- multiple image thumbnails
-    
-- a selected image
-    
-- a large image view
-    
-- a backdrop
-    
-- an enter/exit animation
-    
-- a shared layout animation between thumbnail & large image
-    
-
----
-
-## Mental model
+We store only **which** image is selected, then look the image up.
 
 ```text
-             IMAGE GALLERY
-                    │
-                    ▼
-            selectedId = null
-                    │
-                    ▼
-             show thumbnails
-                    │
-              user clicks
-                image 2
-                    │
-                    ▼
-          setSelectedId("2")
-                    │
-                    ▼
-             React re-renders
-                    │
-                    ▼
-       selected = images.find(...)
-                    │
-                    ▼
-          render large image
-                    │
-                    ▼
-       same layoutId = "2"
-                    │
-                    ▼
-          Framer Motion sees
-          thumbnail + large image
-          as the same visual thing
+selectedId = null  →  click image 2  →  setSelectedId("2")  →  find() the image  →  large view grows from the thumbnail
 ```
 
-The important thing here is:
+## How it works
 
-> We store **which image is selected**, not the entire selected image.
+### 01 The images are data
 
----
+Each image is an object with an `id` and a `url`, kept in an array.
 
-## The code
+- The `id` is how we'll identify an image later, both for state and for the animation.
 
 ```jsx
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-
 const images = [
-  {
-    id: "1",
-    url: "https://picsum.photos/seed/one/400/300",
-  },
-  {
-    id: "2",
-    url: "https://picsum.photos/seed/two/400/300",
-  },
-  {
-    id: "3",
-    url: "https://picsum.photos/seed/three/400/300",
-  },
-  {
-    id: "4",
-    url: "https://picsum.photos/seed/four/400/300",
-  },
+  { id: "1", url: "https://picsum.photos/seed/one/400/300" },
+  { id: "2", url: "https://picsum.photos/seed/two/400/300" },
 ];
-
-export default function ImageGalleryLayout() {
-  const [selectedId, setSelectedId] = useState(null);
-
-  const selected = images.find(
-    (img) => img.id === selectedId
-  );
-
-  return (
-    <div className="w-80">
-      <div className="grid grid-cols-2 gap-2">
-        {images.map((img) => (
-          <motion.img
-            key={img.id}
-            layoutId={img.id}
-            src={img.url}
-            onClick={() => setSelectedId(img.id)}
-            className="h-24 w-full cursor-pointer rounded-lg object-cover"
-          />
-        ))}
-      </div>
-
-      <AnimatePresence>
-        {selected && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 flex items-center justify-center bg-black/70"
-            onClick={() => setSelectedId(null)}
-          >
-            <motion.img
-              layoutId={selected.id}
-              src={selected.url}
-              className="max-h-[80vh] max-w-[80vw] rounded-xl object-cover"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
 ```
 
----
+### 02 Store only the selected id
 
-## 1. The image data
+The state is just the id of the open image, or `null` for none.
 
-Each image is an object:
-
-```jsx
-{
-  id: "1",
-  url: "..."
-}
-```
-
-So our array looks like:
-
-```text
-images
-  ↓
-[
-  { id: "1", url: "..." },
-  { id: "2", url: "..." },
-  { id: "3", url: "..." },
-  { id: "4", url: "..." }
-]
-```
-
-This is JavaScript data.
-
-React doesn't create this data.
-
-We give the data to React.
-
----
-
-## 2. `selectedId`
+- Clicking a thumbnail sets its id.
+- Clicking the backdrop sets it back to `null`.
 
 ```jsx
 const [selectedId, setSelectedId] = useState(null);
-```
 
-Initially:
-
-```text
-selectedId = null
-```
-
-That means:
-
-> No image is selected.
-
-When the user clicks image 2:
-
-```jsx
-setSelectedId(img.id)
-```
-
-Now:
-
-```text
-selectedId = "2"
-```
-
-Notice that we store:
-
-```text
-"2"
-```
-
-not:
-
-```text
-{
-  id: "2",
-  url: "..."
-}
-```
-
-We only need the identity of the selected image.
-
----
-
-## 3. Derived data with `find()`
-
-Now we need the actual image object.
-
-```jsx
-const selected = images.find(
-  (img) => img.id === selectedId
-);
-```
-
-`.find()` is JavaScript.
-
-It means:
-
-> Look through the array & return the first item that matches this condition.
-
-If:
-
-```text
-selectedId = "2"
-```
-
-then:
-
-```text
-images.find(...)
-       ↓
-{ id: "2", url: "..." }
-```
-
-So:
-
-```jsx
-selected
-```
-
-is the complete selected image object.
-
----
-
-## 4. Why not store `selected` directly?
-
-You could technically store the whole object.
-
-But then you'd have two pieces of information:
-
-```text
-selectedId
-selected
-```
-
-which can potentially get out of sync.
-
-Instead:
-
-```text
-selectedId
-   ↓
-images.find(...)
-   ↓
-selected
-```
-
-There is only one source of truth.
-
-This is called **derived state**.
-
-The selected image can be calculated from the selected ID, so we don't need to store both.
-
----
-
-## 5. Rendering the thumbnails
-
-```jsx
-{images.map((img) => (
-  <motion.img
-    key={img.id}
-    src={img.url}
-    onClick={() => setSelectedId(img.id)}
-  />
-))}
-```
-
-The process is:
-
-```text
-images array
-    ↓
-.map()
-    ↓
-one image element per object
-```
-
-Each image gets:
-
-```jsx
-src={img.url}
-```
-
-so the browser knows what image to display.
-
----
-
-## 6. Clicking an image
-
-This:
-
-```jsx
 onClick={() => setSelectedId(img.id)}
 ```
 
-means:
+### 03 Look up the full image with find()
 
-> When this image is clicked, store its ID as the selected ID.
+[`find()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find) returns the first item that matches, or `undefined` if none does.
 
-For image 3:
-
-```text
-click image 3
-    ↓
-img.id = "3"
-    ↓
-setSelectedId("3")
-    ↓
-React re-renders
-```
-
----
-
-## 7. Conditional rendering
-
-The large image only exists when there is a selected image:
+- `selected` is **derived**: calculated from `selectedId` on every render.
+- One source of truth (`selectedId`), everything else worked out from it.
 
 ```jsx
-{selected && (
-  <motion.div>
-    ...
-  </motion.div>
-)}
+const selected = images.find((img) => img.id === selectedId);
 ```
 
-Remember:
+### 04 Show the large view only when selected
 
-```text
-null && thing
-    ↓
-nothing
+`&&` renders the backdrop and big image only when `selected` exists.
 
-object && thing
-    ↓
-thing
-```
-
-So:
-
-```text
-selected = null
-↓
-no large image
-
-selected = image object
-↓
-large image exists
-```
-
----
-
-## 8. Closing the image
-
-The backdrop has:
+- `undefined` counts as false, so nothing renders when no image is open.
+- The backdrop is `fixed inset-0`, covering the screen, and clicking it closes the view.
 
 ```jsx
-onClick={() => setSelectedId(null)}
+<AnimatePresence>
+  {selected && (
+    <motion.div className="fixed inset-0 bg-black/70" onClick={() => setSelectedId(null)}>
+      <motion.img layoutId={selected.id} src={selected.url} />
+    </motion.div>
+  )}
+</AnimatePresence>
 ```
 
-So:
+### 05 layoutId makes them one image
 
-```text
-click backdrop
-     ↓
-setSelectedId(null)
-     ↓
-selected = undefined
-     ↓
-selected && (...)
-     ↓
-nothing
-```
+The thumbnail and the large image share the same `layoutId`.
 
-`AnimatePresence` then allows the large image view to animate out.
-
----
-
-## 9. The important `layoutId`
-
-The thumbnail has:
+- Framer Motion treats them as the same thing, so it animates the thumbnail growing into the large view (and back).
+- This is the same shared-identity idea as the Tab Switcher pill.
 
 ```jsx
-layoutId={img.id}
+<motion.img key={img.id} layoutId={img.id} src={img.url} />
 ```
 
-The large image has:
+## What belongs to what
 
-```jsx
-layoutId={selected.id}
-```
-
-Suppose image 2 is selected.
-
-Both become:
-
-```text
-layoutId="2"
-```
-
-Framer Motion sees:
-
-```text
-thumbnail
-layoutId="2"
-
-      ↓
-
-large image
-layoutId="2"
-```
-
-and understands:
-
-> These represent the same visual element across two different layouts.
-
-So instead of simply:
-
-```text
-thumbnail disappears
-large image appears
-```
-
-you get a visual transition:
-
-```text
-thumbnail
-   ↓
-expands
-   ↓
-large image
-```
-
----
-
-## 10. React vs Framer Motion
-
-This distinction is important.
-
-React decides:
-
-```text
-which image is selected?
-should the large image exist?
-```
-
-JavaScript decides:
-
-```text
-which object matches the ID?
-```
-
-Framer Motion decides:
-
-```text
-how does the selected image visually move
-from one layout to another?
-```
-
----
-
-## What belongs to what?
-
-|Concept|Technology|
-|---|---|
-|`selectedId`|React|
-|`useState`|React|
-|conditional rendering|React|
-|`images`|JavaScript|
-|`.map()`|JavaScript|
-|`.find()`|JavaScript|
-|`layoutId`|Framer Motion|
-|`AnimatePresence`|Framer Motion|
-|`grid`|CSS / Tailwind|
-|`fixed`|CSS / Tailwind|
-
----
+- **React**: `useState`, derived data, conditional rendering, `.map()`
+- **JavaScript**: objects in arrays, `.find()`, `===`, `null` / `undefined`
+- **Tailwind**: `grid grid-cols-2`, `fixed inset-0`, `object-cover`, `max-h-[80vh]`
+- **Framer Motion**: `layoutId`, `AnimatePresence`, `initial`, `animate`, `exit`
 
 ## Things to understand
 
-- objects inside arrays
-    
-- `.map()`
-    
-- `.find()`
-    
-- selected state
-    
-- derived state
-    
-- conditional rendering
-    
-- `layoutId`
-    
-- `AnimatePresence`
-    
-- source of truth
-    
+### Why not store the whole selected image in state?
 
----
+Then you'd have two copies of the same image (in the array and in state) that could drift apart. Storing the id and using `find()` keeps one source of truth.
+
+### What happens if two images share a `layoutId`?
+
+Framer Motion can't tell which one should grow. Try setting `layoutId` to a fixed value and watch it get confused.
 
 ## Try changing it
 
 1. Add 4 more images.
-    
-2. Add captions to each image.
-    
-3. Show the caption in the expanded view.
-    
-4. Add a close button.
-    
-5. Add Previous / Next buttons.
-    
-6. Store image objects with:
-    
+2. Add a caption to each and show it in the large view.
+3. Add a close button.
+4. Add Previous and Next buttons.
+5. Change `layoutId={img.id}` to a static value and observe what breaks.
 
-```jsx
-{
-  id: "1",
-  url: "...",
-  title: "Mountain",
-  category: "Travel"
-}
-```
+## Read next
 
-7. Try changing `layoutId={img.id}` to a static value and observe what happens.
-    
-
----
-
-## What this component teaches
-
-This component introduces an important principle:
-
-> **Don't store something in state if you can calculate it from existing state.**
-
-Instead of:
-
-```text
-selectedImage
-selectedId
-```
-
-we have:
-
-```text
-selectedId
-    ↓
-find()
-    ↓
-selectedImage
-```
-
-One source of truth. Everything else is derived.
-
----
-
-## Next concepts
-
-This leads naturally into:
-
-- derived state
-    
-- lifting state up
-    
-- props
-    
-- controlled components
-    
-- reusable component APIs
+- [Choosing the state structure](https://react.dev/learn/choosing-the-state-structure)
+- [Array find()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find)
+- [Framer Motion layout animations](https://motion.dev/docs/react-layout-animations)
+- [Conditional rendering](https://react.dev/learn/conditional-rendering)

@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function DrawerModal() {
+export default function DrawerModal({ onStateChange }) {
   const [isOpen, setIsOpen] = useState(false);
   const onClose = () => setIsOpen(false);
   const title = "Drawer";
@@ -30,6 +30,10 @@ export default function DrawerModal() {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
+
+  useEffect(() => {
+    onStateChange?.({ isOpen });
+  }, [isOpen, onStateChange]);
 
   return (
     <>

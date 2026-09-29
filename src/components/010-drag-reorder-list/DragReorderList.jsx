@@ -3,7 +3,7 @@ import { Reorder } from "framer-motion";
 
 const initialItems = ["Write daily component", "Review pull requests", "Ship the release", "Reply to feedback"];
 
-export default function DragReorderList({ autoPlay = false }) {
+export default function DragReorderList({ autoPlay = false, onStateChange }) {
   const [items, setItems] = useState(initialItems);
 
   useEffect(() => {
@@ -19,6 +19,10 @@ export default function DragReorderList({ autoPlay = false }) {
     }, 300);
     return () => clearTimeout(timer);
   }, [autoPlay]);
+
+  useEffect(() => {
+    onStateChange?.({ items });
+  }, [items, onStateChange]);
 
   return (
     <Reorder.Group

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const faqs = [
@@ -7,8 +7,12 @@ const faqs = [
   { question: "What is Three.js?", answer: "A JavaScript library for building 3D graphics in the browser using WebGL." },
 ];
 
-export default function Accordion() {
+export default function Accordion({ onStateChange }) {
   const [openIndex, setOpenIndex] = useState(null);
+
+  useEffect(() => {
+    onStateChange?.({ openIndex });
+  }, [openIndex, onStateChange]);
 
   return (
     <div className="w-80 flex flex-col gap-2">

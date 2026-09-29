@@ -8,7 +8,7 @@ const images = [
   { id: "4", url: "https://picsum.photos/seed/four/400/300" },
 ];
 
-export default function ImageGalleryLayout({ autoPlay = false }) {
+export default function ImageGalleryLayout({ autoPlay = false, onStateChange }) {
   const [selectedId, setSelectedId] = useState(null);
   const selected = images.find((img) => img.id === selectedId);
 
@@ -17,6 +17,10 @@ export default function ImageGalleryLayout({ autoPlay = false }) {
     const timer = setTimeout(() => setSelectedId(images[0].id), 300);
     return () => clearTimeout(timer);
   }, [autoPlay]);
+
+  useEffect(() => {
+    onStateChange?.({ selectedId });
+  }, [selectedId, onStateChange]);
 
   return (
     <div className="w-80">

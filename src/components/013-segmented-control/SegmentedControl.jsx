@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useId, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
 export function Segmented({ options, value, onChange, layoutId }) {
@@ -37,8 +37,12 @@ export function Segmented({ options, value, onChange, layoutId }) {
 
 const demoOptions = ["Day", "Week", "Month", "Year"];
 
-export default function SegmentedControl() {
+export default function SegmentedControl({ onStateChange }) {
   const [selected, setSelected] = useState(demoOptions[0]);
+
+  useEffect(() => {
+    onStateChange?.({ selected });
+  }, [selected, onStateChange]);
 
   return <Segmented options={demoOptions} value={selected} onChange={setSelected} />;
 }

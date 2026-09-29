@@ -1,182 +1,50 @@
-A tooltip that follows your mouse cursor.
+## The idea
 
-The goal isn't just to make a tooltip. The goal is to understand how React can respond to **browser events** and use that information to update the UI.
+A small tooltip that follows your cursor while you're inside a box, and disappears when you leave. The goal is to see how React responds to **browser events** and turns the information they carry into UI.
 
----
-
-## What are we building?
-
-When the user moves their mouse inside a container, a small tooltip follows the cursor.
+We need to know two things: is the cursor inside, and where is it?
 
 ```text
-┌─────────────────────────────────┐
-│                                 │
-│       move your cursor →        │
-│                         [info]  │
-│                                 │
-└─────────────────────────────────┘
+mouse moves  →  browser gives the position  →  setCoords()  →  re-render  →  tooltip moves
 ```
 
-When the cursor leaves the container, the tooltip disappears.
+## How it works
 
----
+### 01 Track whether we're hovering
 
-## The mental model
+A boolean decides whether the tooltip should exist at all.
 
-There are two things we need to know:
-
-1. Is the cursor inside the container?
-2. Where is the cursor?
-
-So we keep two pieces of state:
-
-```text
-isHovering
-    ↓
-should the tooltip exist?
-
-coords
-    ↓
-where should the tooltip be?
-```
-
-The overall flow:
-
-```text
-mouse enters
-    ↓
-isHovering = true
-    ↓
-show tooltip
-
-mouse moves
-    ↓
-browser gives us cursor position
-    ↓
-save position in coords
-    ↓
-React re-renders
-    ↓
-tooltip moves
-
-mouse leaves
-    ↓
-isHovering = false
-    ↓
-hide tooltip
-```
-
----
-
-## What belongs to what?
-
-### JavaScript
-
-JavaScript gives us things like:
-
-- the mouse event
-- `getBoundingClientRect()`
-- `clientX` & `clientY`
-- objects
-- calculations
-
-### React
-
-React gives us:
-
-- `useState`
-- event handlers
-- re-rendering
-- conditional rendering
-
-
-### Tailwind
-
-Tailwind controls:
-
-- size
-- spacing
-- positioiing
-- colours
-- typography
-
-### Framer Motion
-
-Framer Motion controls:
-
-- the tooltip's entrance
-- the tooltip's exit
-- animation
-
-
-This separation is useful because React isn't doing everything.
-
----
-
-## Step 1 — tracking whether we're hovering
+- The mouse enters: `isHovering` becomes `true`.
+- The mouse leaves: it goes back to `false`.
 
 ```jsx
 const [isHovering, setIsHovering] = useState(false);
-```
 
-We start with:
-
-```text
-isHovering = false
-```
-
-When the mouse enters:
-
-```jsx
 onMouseEnter={() => setIsHovering(true)}
-```
-
-When it leaves:
-
-```jsx
 onMouseLeave={() => setIsHovering(false)}
 ```
 
-So:
+### 02 Track where the cursor is
 
-```text
-mouse enters
-    ↓
-setIsHovering(true)
-    ↓
-isHovering = true
-    ↓
-React re-renders
-```
+A boolean isn't enough, we also need `x` and `y`. So this state is an object.
 
----
-
-## Step 2 — tracking the cursor position
-
-A boolean isn't enough.
-
-We also need to know:
-
-```text
-x = ?
-y = ?
-```
-
-So we use an object:
+- `x` and `y` belong together, so they live in one [object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object).
 
 ```jsx
-const [coords, setCoords] = useState({
-  x: 0,
-  y: 0,
-});
+const [coords, setCoords] = useState({ x: 0, y: 0 });
 ```
 
-When the mouse moves:
+### 03 Read the position from the event
+
+Every mouse move hands us an **event object**, `e`, full of information.
+
+- `e.clientX` / `e.clientY` is the cursor position in the whole browser window.
+- `getBoundingClientRect()` tells us where our box is.
+- Subtracting the box's position gives the cursor's position **inside the box**.
 
 ```jsx
 function handleMouseMove(e) {
   const rect = e.currentTarget.getBoundingClientRect();
-
   setCoords({
     x: e.clientX - rect.left,
     y: e.clientY - rect.top,
@@ -184,251 +52,75 @@ function handleMouseMove(e) {
 }
 ```
 
-There are a few new concepts here.
+### 04 Show and place the tooltip
 
-### `e`
+`&&` renders the tooltip only while hovering, and `style` puts it at the saved position.
 
-`e` is the **event object**.
-
-The browser gives it to our event handler.
-
-It contains information about the event that happened.
-
-### `e.clientX`
-
-The cursor's X position relative to the browser viewport.
-
-### `e.clientY`
-
-The cursor's Y position relative to the browser viewport.
-
-### `getBoundingClientRect()`
-
-This gives us information about the element's position and size.
-
-We use it because we don't want the tooltip position relative to the entire browser window.
-
-We want it relative to our container.
-
-So:
-
-```text
-browser cursor position
-        ↓
-clientX / clientY
-        ↓
-subtract container position
-        ↓
-local x / y
-        ↓
-position tooltip
-```
-
----
-
-## Step 3 — conditionally render the tooltip
-
-We only want the tooltip when the user is hovering.
+- `coords = { x: 120, y: 80 }` becomes `left: 120px; top: 80px`.
+- Every move updates `coords`, React re-renders, and the tooltip lands in its new spot.
 
 ```jsx
 {isHovering && (
-  <motion.div>
-    ...
+  <motion.div style={{ left: coords.x, top: coords.y }}>
+    👀 Watching
   </motion.div>
 )}
 ```
 
-This is **conditional rendering**.
+### 05 Animate in and out
 
-You can read it as:
+React decides **whether** the tooltip exists. Framer Motion decides **how** it appears and disappears.
 
-> if `isHovering` is true, render this.
-
-The `&&` here is a JavaScript pattern commonly used in React for conditional rendering.
-
----
-
-## Step 4 — position the tooltip
-
-The tooltip uses:
-
-```jsx
-style={{
-  left: coords.x,
-  top: coords.y,
-}}
-```
-
-So if:
-
-```text
-coords = {
-  x: 120,
-  y: 80
-}
-```
-
-the tooltip gets positioned at:
-
-```text
-left: 120px
-top: 80px
-```
-
-Every mouse movement updates `coords`.
-
-That causes React to render the tooltip at the new position.
-
----
-
-## Step 5 — animate it
-
-React answers:
-
-> should the tooltip exist?
-
-Framer Motion answers:
-
-> how should it appear/disappear?
+- `AnimatePresence` lets the tooltip play its exit animation before React removes it.
 
 ```jsx
 <AnimatePresence>
   {isHovering && (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
-      ...
-    </motion.div>
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.8 }}
+    />
   )}
 </AnimatePresence>
 ```
 
----
+## What belongs to what
 
-## New concepts in this component
+- **React**: `useState`, event handlers, conditional rendering, re-render
+- **JavaScript**: objects, the event object `e`, `&&`, calculations
+- **Browser APIs**: `getBoundingClientRect()`, `clientX`, `clientY`
+- **Tailwind**: `relative`, `absolute`, positioning, `pointer-events-none`
+- **Framer Motion**: `motion.div`, `AnimatePresence`, `initial`, `animate`, `exit`
 
-### React
+## Things to understand
 
-- `useState`
-    
-- event handlers
-    
-- conditional rendering
-    
-- re-render
-    
+### Why do we need `coords`?
 
-### JavaScript
+The tooltip needs to know where to go. Without `coords` it could appear, but never follow.
 
-- objects
-    
-- function parameters
-    
-- event objects
-    
-- `&&`
-    
-- calculations
-    
+### Why subtract the box's position?
 
-### Browser APIs
+`clientX` is measured from the edge of the browser window. The tooltip is positioned inside the box, so we need the distance from the box's edge instead.
 
-- `getBoundingClientRect()`
-    
-- `clientX`
-    
-- `clientY`
-    
+### Why do we need `AnimatePresence`?
 
-### Framer Motion
-
-- `motion.div`
-    
-- `AnimatePresence`
-    
-- `initial`
-    
-- `animate`
-    
-- `exit`
-    
-
-### CSS / Tailwind
-
-- `relative`
-    
-- `absolute`
-    
-- positioning
-    
-- `pointer-events-none`
-    
-
----
-
-## Things I need to understand before moving on
-
-Don't just memorise this component.
-
-Make sure you can answer:
-
-**Why do we need `coords`?**
-
-Because the tooltip needs to know where to go.
-
-**Why is `coords` an object?**
-
-Because we're storing two related values: `x` & `y`.
-
-**Why does changing `coords` move the tooltip?**
-
-Because state changes → React re-renders → the new coordinates are applied.
-
-**Why do we need `AnimatePresence`?**
-
-Because the tooltip is conditionally removed from the DOM, and we want Framer Motion to control its exit animation.
-
----
+The tooltip is removed from the page when you leave. Without `AnimatePresence`, it would vanish instantly instead of fading out.
 
 ## Try changing it
 
-Before moving to the next component, try:
-
 1. Make the tooltip follow only the X position.
-    
-2. Offset it by `10px`.
-    
-3. Make it appear below the cursor instead of directly on it.
-    
+2. Offset it by `10px` so it sits beside the cursor.
+3. Make it appear below the cursor.
 4. Change the enter animation.
-    
-5. Remove Framer Motion completely & see what React still does.
-    
-6. Remove `coords` & understand why the tooltip can no longer follow the cursor.
-    
+5. Remove Framer Motion completely and see what React still does.
+6. Remove `coords` and explain why it stops following.
 
-The goal is not to copy the component.
+The goal isn't to copy it. It's to break it and understand why it broke.
 
-The goal is to be able to break it & understand why it broke.
+## Read next
 
----
-
-## What this component teaches
-
-The bigger idea is:
-
-```text
-browser event
-    ↓
-event data
-    ↓
-React state
-    ↓
-re-render
-    ↓
-updated UI
-```
-
-This is one of the most important patterns in interactive UI.
+- [Responding to events](https://react.dev/learn/responding-to-events)
+- [Conditional rendering](https://react.dev/learn/conditional-rendering)
+- [getBoundingClientRect()](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect)
+- [MouseEvent clientX](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/clientX)

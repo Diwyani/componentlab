@@ -1,683 +1,166 @@
-A bottom sheet that opens from the bottom of the screen, locks page scrolling, closes when you click outside, press Escape, or drag it down.
+## The idea
 
-## What are we building?
+A sheet that slides up from the bottom of the screen. While it's open the page behind can't scroll, and you can close it by clicking outside, pressing Escape, or dragging it down.
 
-A drawer with:
-
-- an open/close state
-- a backdrop
-- Escape key support
-- locked body scrolling
-- drag-to-close interaction
-- enter & exit animations
-
-The important part is that this component combines **React state + browser effects + Framer Motion interactions**.
-
----
-
-## Mental model
+This component has three jobs split between three tools:
 
 ```text
-                 DRAWER
-                    │
-                    ▼
-             isOpen = false
-                    │
-              user clicks
-             "Open Drawer"
-                    │
-                    ▼
-             setIsOpen(true)
-                    │
-                    ▼
-             React re-renders
-                    │
-                    ▼
-              isOpen = true
-                    │
-          ┌─────────┴─────────┐
-          ▼                   ▼
-    render drawer        render backdrop
-          │                   │
-          │              click outside
-          │                   │
-          │                   ▼
-          │               onClose()
-          │
-          ├── press Escape
-          │       ↓
-          │    onClose()
-          │
-          └── drag down
-                  ↓
-             enough distance
-             or velocity?
-                  ↓
-              onClose()
-                  │
-                  ▼
-            isOpen = false
-                  │
-                  ▼
-             drawer exits
+React          →  decides whether the drawer exists
+Browser / JS   →  locks page scrolling, listens for the Escape key
+Framer Motion  →  animates it and handles dragging
 ```
 
-There are actually **three different jobs** happening here:
+## How it works
 
-```text
-React
-↓
-decides whether drawer exists
+### 01 Open and close with one boolean
 
-Browser / JavaScript
-↓
-handles body scroll + keyboard events
+`isOpen` decides whether the drawer exists at all.
 
-Framer Motion
-↓
-handles animation + dragging
-```
-
----
-
-## The code
-
-```jsx
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-
-export default function DrawerModal() {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const onClose = () => setIsOpen(false);
-
-  const title = "Drawer";
-
-  const children = (
-    <p className="text-sm text-neutral-500 dark:text-neutral-400">
-      This is the drawer content. Drag the handle down, click the backdrop,
-      or press Escape to close it.
-    </p>
-  );
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleKey = (e) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
-
-    window.addEventListener("keydown", handleKey);
-
-    return () => {
-      window.removeEventListener("keydown", handleKey);
-    };
-  }, [onClose]);
-
-  return (
-    <>
-      <button onClick={() => setIsOpen(true)}>
-        Open Drawer
-      </button>
-
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            <motion.div
-              className="fixed inset-0 z-40 bg-black/50"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={onClose}
-            />
-
-            <motion.div
-              className="fixed bottom-0 left-0 right-0 z-50 flex max-h-[85vh] flex-col rounded-t-2xl bg-white shadow-xl dark:bg-neutral-900"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{
-                type: "spring",
-                damping: 30,
-                stiffness: 300,
-              }}
-              drag="y"
-              dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={{ top: 0, bottom: 0.5 }}
-              onDragEnd={(_, info) => {
-                if (
-                  info.offset.y > 100 ||
-                  info.velocity.y > 500
-                ) {
-                  onClose();
-                }
-              }}
-              role="dialog"
-              aria-modal="true"
-              aria-label={title}
-            >
-              <div className="flex shrink-0 justify-center pb-1 pt-3">
-                <div className="h-1.5 w-10 rounded-full bg-neutral-300 dark:bg-neutral-700" />
-              </div>
-
-              {title && (
-                <div className="shrink-0 px-5 pb-3">
-                  <h2 className="text-lg font-semibold">{title}</h2>
-                </div>
-              )}
-
-              <div className="overflow-y-auto px-5 pb-6">{children}</div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </>
-  );
-}
-```
-
----
-
-## 1. `isOpen` is the source of truth
+- The button sets it to `true`.
+- Every way of closing (backdrop, Escape, drag) calls the same `onClose` function.
 
 ```jsx
 const [isOpen, setIsOpen] = useState(false);
+const onClose = () => setIsOpen(false);
+
+<button onClick={() => setIsOpen(true)}>Open Drawer</button>
 ```
 
-The drawer only needs to know one thing:
+### 02 Lock the page scroll
 
-> Should I be open?
+When the drawer is open, the page behind it shouldn't scroll. That means changing the page itself, which is a side effect, so it goes in `useEffect`.
 
-So we use a boolean.
-
-```text
-false → closed
-true  → open
-```
-
-When the button is clicked:
+- `[isOpen]` means: run this again every time `isOpen` changes.
+- The cleanup resets the scroll, so it never gets stuck locked.
 
 ```jsx
-setIsOpen(true)
+useEffect(() => {
+  if (isOpen) {
+    document.body.style.overflow = "hidden";
+  } else {
+    document.body.style.overflow = "";
+  }
+  return () => {
+    document.body.style.overflow = "";
+  };
+}, [isOpen]);
 ```
 
-React re-renders.
+### 03 Close on Escape
 
-Now this:
+React has no "press Escape anywhere" event, so we listen on the browser `window` directly.
+
+- `addEventListener` starts listening. The event object `e` tells us which key was pressed.
+- The cleanup removes the listener. Forgetting this leaves listeners piling up.
 
 ```jsx
-{isOpen && (...)}
+useEffect(() => {
+  const handleKey = (e) => {
+    if (e.key === "Escape") onClose();
+  };
+  window.addEventListener("keydown", handleKey);
+  return () => window.removeEventListener("keydown", handleKey);
+}, [onClose]);
 ```
 
-becomes:
+### 04 A backdrop that closes it
 
-```text
-true && drawer
-```
+A dark layer covers the whole screen behind the drawer.
 
-So the drawer is rendered.
-
----
-
-## 2. What does `&&` mean?
-
-You have already seen this pattern many times:
-
-```jsx
-{isOpen && <Drawer />}
-```
-
-It means:
-
-> Render `<Drawer />` only when `isOpen` is true.
-
-Think:
-
-```text
-condition && thing
-
-false && thing → nothing
-true && thing  → thing
-```
-
-This is called **conditional rendering**.
-
----
-
-## 3. `AnimatePresence`
-
-Normally, when React stops rendering something:
-
-```jsx
-{isOpen && <Drawer />}
-```
-
-the element disappears immediately.
-
-`AnimatePresence` allows Framer Motion to animate that removal.
-
-```text
-isOpen = true
-↓
-drawer enters
-
-isOpen = false
-↓
-drawer exits
-↓
-then removed
-```
-
-That is why we use:
-
-```jsx
-<AnimatePresence>
-  {isOpen && (...)}
-</AnimatePresence>
-```
-
----
-
-## 4. The drawer animation
-
-```jsx
-initial={{ y: "100%" }}
-animate={{ y: 0 }}
-exit={{ y: "100%" }}
-```
-
-The drawer starts below the screen:
-
-```text
-y: 100%
-     ↓
-     ┌─────────────┐
-     │             │
-     │    screen   │
-     │             │
-     └─────────────┘
-             drawer
-```
-
-Then:
-
-```text
-y: 0
-```
-
-moves it into place.
-
-When closing:
-
-```text
-y: 0
- ↓
-y: 100%
-```
-
-So the drawer slides back down.
-
----
-
-## 5. The backdrop
-
-The backdrop is a completely separate element:
+- `fixed inset-0` stretches it over everything.
+- Clicking it calls `onClose`: that's "click outside to close".
 
 ```jsx
 <motion.div
-  className="fixed inset-0 ..."
+  className="fixed inset-0 bg-black/50"
   onClick={onClose}
 />
 ```
 
-Its job is simple:
+### 05 Slide in and out
 
-```text
-user clicks outside drawer
-        ↓
-      onClose()
-        ↓
-  setIsOpen(false)
-```
+`AnimatePresence` lets the drawer animate out before React removes it.
 
-It also fades:
+- `y: "100%"` means pushed fully below the screen. `y: 0` is its resting place.
+- A spring makes the entrance feel physical.
 
 ```jsx
-initial={{ opacity: 0 }}
-animate={{ opacity: 1 }}
-exit={{ opacity: 0 }}
+<AnimatePresence>
+  {isOpen && (
+    <motion.div
+      initial={{ y: "100%" }}
+      animate={{ y: 0 }}
+      exit={{ y: "100%" }}
+      transition={{ type: "spring", damping: 30, stiffness: 300 }}
+    />
+  )}
+</AnimatePresence>
 ```
 
----
+### 06 Drag down to close
 
-## 6. Why `useEffect`?
+Framer Motion gives dragging for free with `drag="y"`.
 
-This component needs to affect things **outside React's rendered UI**.
-
-For example:
-
-```jsx
-document.body.style.overflow = "hidden";
-```
-
-We're changing the browser's page, not a React element.
-
-That's a **side effect**.
-
-`useEffect` is React's mechanism for handling side effects.
-
-```jsx
-useEffect(() => {
-  // side effect
-}, [dependency]);
-```
-
----
-
-## 7. Locking page scrolling
-
-When the drawer opens:
-
-```jsx
-document.body.style.overflow = "hidden";
-```
-
-The page behind the drawer can't scroll.
-
-When it closes:
-
-```jsx
-document.body.style.overflow = "";
-```
-
-Scrolling is restored.
-
-The dependency:
-
-```jsx
-[isOpen]
-```
-
-means:
-
-> Run this effect whenever `isOpen` changes.
-
-So:
-
-```text
-isOpen changes
-     ↓
-effect runs
-     ↓
-lock/unlock body scroll
-```
-
----
-
-## 8. Cleanup
-
-This part:
-
-```jsx
-return () => {
-  document.body.style.overflow = "";
-};
-```
-
-is cleanup.
-
-React runs cleanup when the effect needs to be cleaned up.
-
-Cleanup is especially important for things like:
-
-- timers
-    
-- event listeners
-    
-- subscriptions
-    
-- browser changes
-    
-
-You don't want effects from an old component state hanging around.
-
----
-
-## 9. Escape key
-
-We can listen to browser keyboard events:
-
-```jsx
-window.addEventListener("keydown", handleKey);
-```
-
-Then:
-
-```jsx
-const handleKey = (e) => {
-  if (e.key === "Escape") {
-    onClose();
-  }
-};
-```
-
-The browser gives us an event object `e`.
-
-We inspect:
-
-```jsx
-e.key
-```
-
-to find out which key was pressed.
-
----
-
-## 10. Why remove the listener?
-
-We add:
-
-```jsx
-window.addEventListener("keydown", handleKey);
-```
-
-So we also need:
-
-```jsx
-window.removeEventListener("keydown", handleKey);
-```
-
-Otherwise, the listener can remain active after it is no longer needed.
-
-This is another example of effect cleanup.
-
----
-
-## 11. Dragging
-
-Framer Motion gives us:
+- `dragConstraints` keeps it snapping back, `dragElastic` lets it stretch downward only.
+- On release, `info` says how far (`offset`) and how fast (`velocity`) you dragged.
+- Far enough (100px) **or** fast enough (a flick): close it.
 
 ```jsx
 drag="y"
-```
-
-This means:
-
-> Allow the element to be dragged vertically.
-
-Then:
-
-```jsx
 dragConstraints={{ top: 0, bottom: 0 }}
-```
-
-limits where the drawer can normally settle.
-
-And:
-
-```jsx
 dragElastic={{ top: 0, bottom: 0.5 }}
-```
-
-allows some elastic movement.
-
----
-
-## 12. `onDragEnd`
-
-When dragging finishes:
-
-```jsx
 onDragEnd={(_, info) => {
-  if (
-    info.offset.y > 100 ||
-    info.velocity.y > 500
-  ) {
-    onClose();
-  }
+  if (info.offset.y > 100 || info.velocity.y > 500) onClose();
 }}
 ```
 
-We ask:
+### 07 Tell assistive tech it's a dialog
 
-> Did the user drag it far enough OR fast enough?
+Screen readers can't see that this is a modal, so we say it in attributes.
 
-`info.offset.y` tells us how far it moved.
-
-`info.velocity.y` tells us how quickly it was moving.
-
-So:
-
-```text
-drag down a lot
-      OR
-drag down quickly
-      ↓
-     close
-```
-
-This is a good example of combining **interaction data + React state**.
-
----
-
-## 13. What is `role="dialog"`?
+- `role="dialog"` and `aria-modal="true"` announce it as a modal window.
+- `aria-label` gives it a name.
 
 ```jsx
 role="dialog"
-```
-
-tells assistive technology:
-
-> This is a dialog-like interface.
-
-And:
-
-```jsx
 aria-modal="true"
+aria-label={title}
 ```
 
-communicates that the dialog is currently modal.
+## What belongs to what
 
-Accessibility isn't separate from UI engineering. It is part of building the component correctly.
-
----
-
-## What belongs to what?
-
-|Concept|Technology|
-|---|---|
-|`isOpen`|React|
-|`useState`|React|
-|`useEffect`|React|
-|`document.body`|Browser / JavaScript|
-|`addEventListener`|Browser / JavaScript|
-|`if`|JavaScript|
-|`&&`|JavaScript|
-|`drag`|Framer Motion|
-|`animate`|Framer Motion|
-|`AnimatePresence`|Framer Motion|
-|`fixed`, `z-50`, `p-6`|Tailwind|
-|`role`, `aria-modal`|HTML / Accessibility|
-
----
+- **React**: `useState`, `useEffect`, dependency arrays, cleanup, conditional rendering
+- **JavaScript**: event listeners, the event object, `||`
+- **Browser APIs**: `document.body.style`, `window.addEventListener`, `keydown`
+- **Tailwind**: `fixed`, `inset-0`, `z-40` / `z-50`, `rounded-t-2xl`, `max-h-[85vh]`
+- **Framer Motion**: `AnimatePresence`, `drag`, `dragConstraints`, `dragElastic`, `onDragEnd`
 
 ## Things to understand
 
-Before moving on, make sure these make sense:
+### Why do both effects need cleanup?
 
-- boolean state
-- conditional rendering
-- `&&`
-- `useEffect`
-- dependency arrays
-- cleanup functions
-- browser event listeners
-- event objects
-- `AnimatePresence`
-- drag interactions
-- accessibility attributes
+Both change something outside React (the page's scroll, a window listener). If the component goes away without undoing them, the page stays locked or the listener keeps firing.
 
+### Why check velocity as well as distance?
 
----
+A quick flick barely moves the sheet, but it clearly means "close". Checking speed makes it feel like a real phone sheet.
+
+### Why is this a big step?
+
+Earlier components only changed their own look. This one reaches out and changes the **browser itself**, which is what most real product UI has to do.
 
 ## Try changing it
 
-1. Make the drawer open from the **right** instead of the bottom.
-2. Change the opening animation from a spring to a tween.
+1. Make it open from the right instead of the bottom.
+2. Swap the spring for a tween.
 3. Add a close button.
-4. Make the drawer 50% of the screen height.
-5. Change the drag threshold from `100` to `200`.
-6. Add a second piece of content.
-7. Try removing `AnimatePresence` and see what changes.
+4. Make it exactly 50% of the screen height.
+5. Change the drag distance from `100` to `200`.
+6. Remove `AnimatePresence` and see what changes.
 
+## Read next
 
----
-
-## What this component teaches
-
-This is an important jump from the earlier components.
-
-You are no longer just changing visual state.
-
-You are learning how React interacts with the **browser itself**:
-
-```text
-React state
-    ↓
-UI
-
-React effect
-    ↓
-browser
-
-Framer Motion
-    ↓
-interaction + animation
-```
-
-That pattern appears everywhere in real product interfaces.
-
----
-
-## Next concepts
-
-After this, you should understand:
-
-- controlled components
-- props
-- composition
-- `children`
-- lifting state up
-- reusable component APIs
+- [Synchronizing with Effects](https://react.dev/learn/synchronizing-with-effects)
+- [addEventListener](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener)
+- [Framer Motion drag](https://motion.dev/docs/react-drag)
+- [Dialog role](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles/dialog_role)

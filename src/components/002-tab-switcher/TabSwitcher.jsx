@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
 const tabs = ["Commit", "Analytics", "Upgrade"];
 
-export default function TabSwitcher() {
+export default function TabSwitcher({ onStateChange }) {
   const [activeTab, setActiveTab] = useState(tabs[0]);
+
+  useEffect(() => {
+    onStateChange?.({ activeTab });
+  }, [activeTab, onStateChange]);
 
   return (
     <div className="flex gap-2 p-1 bg-neutral-200 dark:bg-neutral-800 rounded-full w-fit">

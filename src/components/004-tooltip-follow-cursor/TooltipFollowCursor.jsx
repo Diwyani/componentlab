@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function CursorTooltip() {
+export default function CursorTooltip({ onStateChange }) {
   const [isHovering, setIsHovering] = useState(false);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
 
@@ -12,6 +12,10 @@ export default function CursorTooltip() {
       y: e.clientY - rect.top,
     });
   }
+
+  useEffect(() => {
+    onStateChange?.({ isHovering, coords: { x: Math.round(coords.x), y: Math.round(coords.y) } });
+  }, [isHovering, coords, onStateChange]);
 
   return (
     <div

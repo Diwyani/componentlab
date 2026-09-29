@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Copy, Check } from "lucide-react";
 
 const SNIPPET = "npm install component-lab";
 
-export default function CopyToClipboard() {
+export default function CopyToClipboard({ onStateChange }) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -13,6 +13,10 @@ export default function CopyToClipboard() {
       setTimeout(() => setCopied(false), 1500);
     } catch {}
   }
+
+  useEffect(() => {
+    onStateChange?.({ copied });
+  }, [copied, onStateChange]);
 
   return (
     <div className="flex w-80 items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900/40">

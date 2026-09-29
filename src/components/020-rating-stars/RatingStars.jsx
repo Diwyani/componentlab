@@ -1,14 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 
 const MAX = 5;
 
-export default function RatingStars() {
+export default function RatingStars({ onStateChange }) {
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(null);
 
   const display = hovered ?? rating;
+
+  useEffect(() => {
+    onStateChange?.({ rating, hovered });
+  }, [rating, hovered, onStateChange]);
 
   return (
     <div className="flex flex-col items-center gap-2">

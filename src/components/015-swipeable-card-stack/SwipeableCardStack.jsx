@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const cards = [
@@ -8,7 +8,7 @@ const cards = [
   { id: 4, title: "Ocean Breeze", color: "bg-sky-500" },
 ];
 
-export default function SwipeableCardStack() {
+export default function SwipeableCardStack({ onStateChange }) {
   const [stack, setStack] = useState(cards);
   const [exitDirections, setExitDirections] = useState({});
 
@@ -21,6 +21,10 @@ export default function SwipeableCardStack() {
   }
 
   const visible = stack.slice(0, 3);
+
+  useEffect(() => {
+    onStateChange?.({ stack: stack.map((card) => card.id) });
+  }, [stack, onStateChange]);
 
   return (
     <div className="relative h-72 w-64">

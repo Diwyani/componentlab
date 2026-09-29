@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, Children } from 'react'
+import { useCallback, useEffect, useRef, useState, Children } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -6,6 +6,8 @@ import { Star } from 'lucide-react'
 import ComponentShowcase from '../showcase/ComponentShowcase.jsx'
 import QuickNotes from './QuickNotes.jsx'
 import Tag from './Tag.jsx'
+import StructuredLesson, { isStructuredLesson } from './StructuredLesson.jsx'
+import StatePanel from './StatePanel.jsx'
 import { getLessonContent, hasLesson } from '../../lessons.js'
 
 function textFromChildren(children) {
@@ -151,6 +153,12 @@ export default function LessonView({ lessonList, lessonCategories, entries = [] 
   const [activeId, setActiveId] = useState('')
   const [scrollProgress, setScrollProgress] = useState(0)
   const [query, setQuery] = useState('')
+  const [liveState, setLiveState] = useState(null)
+  const reportState = useCallback((state) => setLiveState({ slug, state }), [slug])
+  const structured = isStructuredLesson(content)
+  const orderedLessons = lessonCategories.flatMap((c) => c.items)
+  const nextLesson = orderedLessons[orderedLessons.findIndex((l) => l.slug === slug) + 1] ?? null
+
   const headings = extractHeadings(content)
 
   // Filters each category's items by name/slug — categories with zero
@@ -278,12 +286,19 @@ export default function LessonView({ lessonList, lessonCategories, entries = [] 
 
           {!isIndex && entry?.component && (
             <div className="mt-6">
-              <ComponentShowcase preview={<entry.component />} code={entry.source} language="jsx" />
+              <ComponentShowcase
+                preview={<entry.component onStateChange={reportState} />}
+                code={entry.source}
+                language="jsx"
+              />
+              {liveState?.slug === slug && <StatePanel state={liveState.state} />}
             </div>
           )}
 
           <article ref={articleRef} className="mt-8">
-            {hasLesson(slug) && content ? (
+            {hasLesson(slug) && content && structured ? (
+              <StructuredLesson markdown={content} components={markdownComponents} slugify={slugify} next={nextLesson} />
+            ) : hasLesson(slug) && content ? (
               <ReactMarkdown components={markdownComponents} remarkPlugins={[remarkGfm]}>
                 {content}
               </ReactMarkdown>

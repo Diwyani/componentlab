@@ -1,96 +1,35 @@
-A heart icon that toggles between liked & unliked, with a small spring bounce — the same feel as liking a post on X/Twitter.
+## The idea
 
-The goal isn't just to make a heart change color. This component introduces an important idea:
+A heart that toggles between liked and unliked with a small spring bounce, like liking a post on X. The new idea here:
 
-> **the same piece of state can drive both a visual change (color/fill) and an animation, at the same time.**
-
----
-
-## What are we building?
-
-Initially:
+> **one piece of state can drive a visual change and an animation at the same time.**
 
 ```text
-♡  (outline, gray)
+isLiked = false  →  click  →  setIsLiked(prev => !prev)  →  re-render  →  red filled heart + bounce
 ```
 
-After clicking:
+## How it works
 
-```text
-♥  (filled, red, with a little pop)
-```
+### 01 The liked state
 
-Click again:
+Same boolean pattern as the Toggle Switch: one value, two states.
 
-```text
-♡  (outline, gray)
-```
-
-One boolean decides everything — the icon's fill, its color, and whether the bounce replays.
-
----
-
-## The mental model
-
-We only need one thing:
-
-```text
-isLiked
-```
+- `false` is an outline heart, `true` is a filled one.
+- `prev => !prev` flips the value based on what it was a moment ago. This is a [functional update](https://react.dev/reference/react/useState#updating-state-based-on-the-previous-state).
 
 ```jsx
 const [isLiked, setIsLiked] = useState(false);
+
+onClick={() => setIsLiked((prev) => !prev)}
 ```
 
-The flow:
+### 02 A real icon, not an emoji
 
-```text
-isLiked = false
-    ↓
-outline heart, gray
-    ↓
-user clicks
-    ↓
-setIsLiked(prev => !prev)
-    ↓
-isLiked = true
-    ↓
-React re-renders
-    ↓
-filled heart, red
-    ↓
-bounce plays
-```
+Emoji look different on every device and can't be styled. An icon from [lucide-react](https://lucide.dev/) is an SVG you fully control.
 
-Click again and it runs the same flow in reverse.
-
----
-
-## Step 1 — the liked state
-
-```jsx
-const [isLiked, setIsLiked] = useState(false);
-```
-
-Same boolean pattern as the Toggle Switch — one value, two possible states.
-
-```text
-false → true → false
-```
-
----
-
-## Step 2 — using a real icon instead of an emoji
-
-Early drafts of this component used emoji (🤍 / ❤️) for the heart. Emoji render inconsistently across operating systems and can't be styled — no controlling their exact size, stroke width, or color.
-
-Instead, we use an actual icon component from [lucide-react](https://lucide.dev/):
-
-```jsx
-import { Heart } from "lucide-react";
-```
-
-`Heart` is just an SVG under the hood, which means it accepts normal SVG props — `className` for size/color via Tailwind, and `fill` to control whether it's outlined or solid:
+- `className` sets the size and colour with Tailwind.
+- `fill` switches between outline (`"none"`) and solid.
+- `fill="currentColor"` means "use the text colour", so the fill matches `text-red-500` without repeating the colour.
 
 ```jsx
 <Heart
@@ -99,21 +38,13 @@ import { Heart } from "lucide-react";
 />
 ```
 
-```text
-isLiked = false
-    ↓
-fill="none", gray outline
+### 03 The bounce
 
-isLiked = true
-    ↓
-fill="currentColor", red fill
-```
+Changing a `key` makes React throw away the old element and mount a brand new one.
 
-`fill="currentColor"` means "fill with whatever the current text color is" — so it automatically matches `text-red-500` without hardcoding a second color value.
-
----
-
-## Step 3 — the bounce
+- `key={isLiked}` changes every time you click.
+- A fresh mount means Framer Motion replays `initial → animate`, from small to full size.
+- That's why the pop plays both when liking and unliking.
 
 ```jsx
 <motion.span
@@ -124,127 +55,38 @@ fill="currentColor", red fill
 >
 ```
 
-The important part here is `key={isLiked}`.
+## What belongs to what
 
-Normally, React reuses the same DOM element across re-renders and just updates its props. But when the `key` changes, React treats it as a **brand new element** — it unmounts the old one and mounts a fresh one. Framer Motion sees a fresh mount and replays `initial → animate` from scratch.
-
-```text
-isLiked: false → true
-    ↓
-key changes (false → true)
-    ↓
-React treats this as a new element
-    ↓
-Framer Motion replays the pop
-```
-
-That's why the bounce plays **both when liking and unliking** — every change to `isLiked` is a new `key`, so the animation restarts every time, in either direction.
-
----
-
-## What belongs to what?
-
-### React
-- `useState`
-- state
-- `key` and why changing it forces a remount
-
-### JavaScript
-- boolean toggling with `!`
-- ternary `? :`
-
-### Tailwind
-- `text-red-500` / `text-neutral-400`
-- sizing (`h-6 w-6`)
-
-### Framer Motion
-- `motion.span`
-- `initial` / `animate`
-- spring transition
-- replaying an animation via `key`
-
-### lucide-react
-- `Heart` icon component
-- `fill` and `className` as normal SVG props
-
----
-
-## The code
-
-```jsx
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Heart } from "lucide-react";
-
-export default function LikeButton() {
-  const [isLiked, setIsLiked] = useState(false);
-
-  return (
-    <button
-      onClick={() => setIsLiked((prev) => !prev)}
-      aria-label={isLiked ? "Unlike" : "Like"}
-      className="flex h-10 w-10 items-center justify-center"
-    >
-      <motion.span
-        key={isLiked}
-        initial={{ scale: 0.6 }}
-        animate={{ scale: 1 }}
-        transition={{ type: "spring", stiffness: 700, damping: 15 }}
-      >
-        <Heart
-          className={isLiked ? "h-6 w-6 text-red-500" : "h-6 w-6 text-neutral-400"}
-          fill={isLiked ? "currentColor" : "none"}
-        />
-      </motion.span>
-    </button>
-  );
-}
-```
-
----
+- **React**: `useState`, functional updates, `key` and remounting
+- **JavaScript**: flipping a boolean with `!`, ternary `? :`
+- **Tailwind**: `text-red-500`, `text-neutral-400`, `h-6 w-6`
+- **Framer Motion**: `motion.span`, `initial`, `animate`, spring transition
+- **lucide-react**: the `Heart` icon, `fill` and `className` as normal SVG props
 
 ## Things to understand
 
-### Why not just animate the `Heart` icon directly, instead of wrapping it in `motion.span`?
+### Why wrap the icon in `motion.span`?
 
-You could `motion.svg` or wrapping the icon differently both work. Wrapping in a plain element keeps the icon itself simple (just styling props) and puts all the animation concerns in one place, which becomes handy if you later want to animate something the icon itself doesn't expose (like a background glow).
+It keeps the icon simple (only styling) and puts all animation in one place. Handy later if you want to animate something the icon doesn't have, like a glow behind it.
 
-### Why `key={isLiked}` instead of using `whileTap` or an `animate` array like `[1, 1.4, 1]`?
+### Why `key` instead of an `animate` array like `[1, 1.4, 1]`?
 
-Both approaches work and you'll see both in the wild. `key`-based remounting is useful when you want a full, clean restart of the animation from `initial` every single time — no risk of it looking different depending on what mid-animation state it interrupted. An `animate` keyframe array is more compact but can look slightly different if the user clicks again before the previous animation finished.
+Both work. A `key` remount always restarts cleanly from `initial`. A keyframe array is shorter, but can look different if you click again before it finishes.
 
-### What happened to the burst/particle effect?
+### Where did the particle burst go?
 
-An earlier version of this component spawned 8 small particles flying outward when liked, using a `burstKey` counter to force a fresh set of particles each time. It was cut for being visually noisy — the icon swap + bounce alone reads clearly as "liked," which is closer to how X's own like button behaves. The core lesson (state driving both appearance and animation) doesn't need the extra complexity to teach.
-
----
+An earlier version sent 8 particles flying out on each like. It was cut for being noisy: the fill plus bounce already reads as "liked", closer to how X does it.
 
 ## Try changing it
 
-1. Swap `Heart` for a different lucide icon (`Star`, `Bookmark`) and see the same pattern still applies.
-2. Change the spring's `stiffness`/`damping` and feel how it changes the bounce.
-3. Make the bounce only play when *liking*, not unliking (hint: you'll need a second piece of state, similar to how `burstKey` used to work).
-4. Add a like counter that increments/decrements alongside `isLiked`.
+1. Swap `Heart` for `Star` or `Bookmark`. The same pattern still works.
+2. Change `stiffness` and `damping` and feel the bounce change.
+3. Make the bounce play only when liking, not unliking. (You'll need a second piece of state.)
+4. Add a like counter that goes up and down with `isLiked`.
 
----
-
-## What this component teaches
-
-```text
-one boolean
-      ↓
-drives visual state (fill, color)
-      ↓
-AND drives animation (via key remount)
-```
-
-The same state variable can simultaneously answer "what does this look like?" and "should an animation replay?" — you don't need separate state for each.
-
----
-
-## Next concepts
+## Read next
 
 - [React state](https://react.dev/learn/state-a-components-memory)
-- [Keys and why they force remounts](https://react.dev/learn/rendering-lists#why-does-react-need-keys)
+- [Why keys force remounts](https://react.dev/learn/rendering-lists#why-does-react-need-keys)
 - [Functional state updates](https://react.dev/reference/react/useState#updating-state-based-on-the-previous-state)
-- [SVG `fill` attribute](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/fill)
+- [SVG fill](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/fill)

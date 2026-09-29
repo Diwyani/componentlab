@@ -1,357 +1,78 @@
-A card that expands into a larger detail view when clicked.
+## The idea
 
-This component is mainly about understanding **UI states** & how React switches between them.
+A small card that grows into a larger detail view when clicked, and shrinks back when closed. It's about **UI states** and how React switches between them, with Framer Motion making the switch look like one card growing.
 
----
-
-## What are we building?
-
-Initially we have a small card:
+There are two versions: collapsed and expanded. One boolean picks which exists.
 
 ```text
-┌──────────────────────┐
-│ Weekly Notes         │
-│ Ideas from this week │
-└──────────────────────┘
+isExpanded = false  →  click card  →  setIsExpanded(true)  →  re-render  →  small card gone, big card animates in
 ```
 
-When we click it:
+## How it works
 
-```text
-┌─────────────────────────────┐
-│ Weekly Notes             ✕  │
-│                             │
-│ Full details about the      │
-│ notes appear here...        │
-│                             │
-└─────────────────────────────┘
-```
+### 01 One boolean, two layouts
 
-There are really **two UI states**:
+`isExpanded` decides which version of the card is on screen.
 
-```text
-collapsed
-    ↓
-expanded
-```
-
----
-
-## The mental model
-
-We need one piece of information:
+- `false`: the small card. `true`: the expanded card.
 
 ```jsx
 const [isExpanded, setIsExpanded] = useState(false);
 ```
 
-Think of it as a switch:
+### 02 The small card
 
-```text
-isExpanded = false
-        ↓
-show small card
+`!isExpanded && (...)` renders the small card only when not expanded.
 
-
-isExpanded = true
-        ↓
-show expanded card
-```
-
-The complete flow:
-
-```text
-isExpanded = false
-       ↓
-small card is shown
-       ↓
-user clicks card
-       ↓
-setIsExpanded(true)
-       ↓
-React re-renders
-       ↓
-small card disappears
-       ↓
-expanded card appears
-```
-
-When the user closes it:
-
-```text
-click the ✕ button
-       ↓
-setIsExpanded(false)
-       ↓
-React re-renders
-       ↓
-expanded card disappears
-       ↓
-small card appears again
-```
-
----
-
-## The most important part of the code
-
-### Small card
+- `!` flips the value: `!false` is `true`, so the small card shows.
+- Clicking it sets `isExpanded` to `true`.
 
 ```jsx
 {!isExpanded && (
-  <motion.button>
-    ...
+  <motion.button layoutId={card.id} onClick={() => setIsExpanded(true)}>
+    <motion.h3 layoutId={`${card.id}-title`}>{card.title}</motion.h3>
+    <p>{card.summary}</p>
   </motion.button>
 )}
 ```
 
-Read this as:
+### 03 The expanded card
 
-> If `isExpanded` is false, show the small card.
+The opposite condition renders the big version with a dark backdrop.
 
-conditionally rendering already learned in tab switching. 
-
-
-```text
-isExpanded = false
-
-!isExpanded
-    ↓
-!false
-    ↓
-true
-```
-
-So the small card renders.
-
----
-
-## After clicking
-
-The small card has:
-
-```jsx
-onClick={() => setIsExpanded(true)}
-```
-
-So:
-
-```text
-click
-  ↓
-setIsExpanded(true)
-  ↓
-isExpanded = true
-```
-
-Now:
-
-```jsx
-!isExpanded
-```
-
-becomes:
-
-```text
-!true
- ↓
-false
-```
-
-So React does not render the small card.
-
----
-
-## The expanded card
-
-The other part says:
+- These are **two different elements**. React swaps one for the other.
+- The backdrop and the X button both set `isExpanded` back to `false`.
+- `aria-label="Close"` names the icon-only button for screen readers.
 
 ```jsx
 {isExpanded && (
-  ...
+  <motion.div layoutId={card.id}>
+    <button onClick={() => setIsExpanded(false)} aria-label="Close">
+      <X />
+    </button>
+    <motion.h3 layoutId={`${card.id}-title`}>{card.title}</motion.h3>
+  </motion.div>
 )}
 ```
 
-Read this as:
+### 04 layoutId connects them
 
-> If `isExpanded` is true, render the expanded version.
+Both cards share `layoutId="notes-card"`, and both titles share `"notes-card-title"`.
 
-So after clicking:
-
-```text
-isExpanded = true
-
-true && (...)
-      ↓
-expanded card renders
-```
-
-This means the component is essentially:
-
-```text
-                  isExpanded
-                      │
-              ┌───────┴───────┐
-              │               │
-            false            true
-              │               │
-              ▼               ▼
-         small card      expanded card
-```
-
-This is the React logic.
-
-**Everything else comes after this.**
-
----
-
-# So why do we have two cards?
-
-This is an important question.
-
-We're not actually taking one HTML element & magically making it bigger.
-
-We have:
-
-```text
-small card
-```
-
-and:
-
-```text
-expanded card
-```
-
-They are two different rendered elements.
-
-React switches between them.
-
-Without animation, this would simply be:
-
-```text
-small card
-     ↓
-remove it
-     ↓
-show expanded card
-```
-
----
-
-# Then what is `layoutId` doing?
-
-Now we introduce Framer Motion.
-
-Small card:
+- React decides **which** version exists. Framer Motion decides **how** to move between them.
+- Matching ids tell Framer Motion "these are the same thing", so it animates the size and position change.
+- The title has its own id, so it glides from its small spot to its big spot separately.
 
 ```jsx
-<motion.button layoutId={card.id}>
+<motion.button layoutId={card.id} />   // small
+<motion.div layoutId={card.id} />      // expanded
 ```
 
-Expanded card:
+### 05 The detail text just fades in
 
-```jsx
-<motion.div layoutId={card.id}>
-```
+The long description only exists in the expanded card, so there's nothing to connect it to.
 
-Assume:
-
-```jsx
-card.id = "notes-card"
-```
-
-So both elements have:
-
-```text
-layoutId = "notes-card"
-```
-
-This tells Framer Motion:
-
-> These two elements represent the same visual object.
-
-React is still responsible for:
-
-```text
-which version exists?
-```
-
-Framer Motion is responsible for:
-
-```text
-how do we visually transition between them?
-```
-
-So:
-
-```text
-REACT
-
-small card
-    ↓
-expanded card
-
-
-FRAMER MOTION
-
-"these have the same layoutId"
-    ↓
-animate the change
-```
-
----
-
-# The title has its own layoutId
-
-The small card contains:
-
-```jsx
-<motion.h3
-  layoutId={`${card.id}-title`}
->
-  {card.title}
-</motion.h3>
-```
-
-The expanded card contains the same:
-
-```jsx
-<motion.h3
-  layoutId={`${card.id}-title`}
->
-  {card.title}
-</motion.h3>
-```
-
-If:
-
-```text
-card.id = "notes-card"
-```
-
-then:
-
-```text
-notes-card-title
-```
-
-identifies the title.
-
-So Framer Motion can also animate:
-
-```text
-Weekly Notes
-```
-
-from its position in the small card to its position in the expanded card.
-
----
-
-# What about the detail text?
-
-The detail text does NOT have a `layoutId`.
-
-Instead:
+- No `layoutId`. It simply fades in, slightly after the card finishes growing.
 
 ```jsx
 <motion.p
@@ -359,247 +80,52 @@ Instead:
   animate={{ opacity: 1 }}
   transition={{ delay: 0.15 }}
 >
+  {card.detail}
+</motion.p>
 ```
 
-It simply fades in.
+### 06 AnimatePresence handles closing
 
-Why?
-
-Because there wasn't a detail paragraph in the small card.
-
-There is nothing to connect.
-
-So:
-
-```text
-CARD
-layoutId
-   ↓
-small card → expanded card
-
-
-TITLE
-layoutId
-   ↓
-small title → expanded title
-
-
-DETAIL
-no layoutId
-   ↓
-just fade in
-```
-
----
-
-# What is AnimatePresence doing?
-
-When:
-
-```text
-isExpanded = false
-```
-
-the expanded card doesn't exist.
-
-When:
-
-```text
-isExpanded = true
-```
-
-it gets rendered.
-
-When it changes back to false, React wants to remove it.
-
-`AnimatePresence` lets Framer Motion animate an element **when it is being removed**.
-
-So:
-
-```text
-isExpanded = false
-        ↓
-React says:
-"expanded card should go away"
-        ↓
-AnimatePresence:
-"let it play its exit animation first"
-```
-
----
-
-# The whole thing
-
-```text
-                isExpanded
-                     │
-                     ▼
-              ┌─────────────┐
-              │    false    │
-              └──────┬──────┘
-                     │
-                     ▼
-                 small card
-                     │
-                   click
-                     │
-                     ▼
-             setIsExpanded(true)
-                     │
-                     ▼
-              ┌─────────────┐
-              │    true     │
-              └──────┬──────┘
-                     │
-                     ▼
-               expanded card
-                     │
-                     │
-              layoutId connects
-                     │
-                     ▼
-          Framer Motion animates
-                     │
-                     ▼
-             small → expanded
-```
-
----
-
-## New concepts in this component
-
-### React
-
-- `useState`
-- conditional rendering
-- `&&`
-- `!`
-- re-render
-- component state
-
-
-### JavaScript
-- template literals
-- object properties
-- boolean values
-
-### Framer Motion
-- `motion`
-- `layoutId`
-- `AnimatePresence`
-- `initial`
-- `animate`
-- `exit`
-- `transition`
-
-### CSS / Tailwind
-
-- `fixed` 
-- `inset-0`
-- `z-index`
-- positioning
-- overlay
-
-
----
-
-## Things I initially need to understand
-
-**Does `layoutId` decide which card appears?**
-
-No.
-
-`isExpanded` decides that.
-
-**Does Framer Motion create the expanded card?**
-
-No.
-
-React renders the expanded card.
-
-**Why are there two card elements?**
-
-Because we're representing two different UI states.
-
-**Why does the transition look like one card expanding?**
-
-Because both versions share the same `layoutId`.
-
----
-
-## Two small revisions worth calling out
-
-The expanded card went through two changes after the version described above:
-
-**The "Close" text button became an X icon.** A text button reads fine, but expanded detail views — cards, modals, drawers — conventionally close via a small icon in the corner rather than a labeled button competing for space with the actual content. The button is now:
+When `isExpanded` turns false, React wants to remove the big card immediately. `AnimatePresence` lets it animate out first.
 
 ```jsx
-<button
-  onClick={() => setIsExpanded(false)}
-  aria-label="Close"
-  className="absolute right-4 top-4 rounded-full p-1 text-neutral-900/60 transition-colors hover:bg-black/10 hover:text-neutral-900"
->
-  <X className="h-4 w-4" />
-</button>
+<AnimatePresence>
+  {isExpanded && ( ... )}
+</AnimatePresence>
 ```
 
-`aria-label="Close"` matters here specifically because the button no longer has any visible text — without it, the button would be announced to assistive technology as unlabeled.
+## What belongs to what
 
-**The expanded card's background became yellow** (`bg-yellow-400`), a deliberate style choice rather than a default. Notice the text colors changed alongside it — `text-neutral-900` / `text-neutral-800` instead of white/gray — because dark text needed enough contrast against a light, saturated background. This is a small but real lesson: changing a background color usually means re-checking every text color layered on top of it, not just the background itself.
+- **React**: `useState`, conditional rendering, `&&`, `!`, re-render
+- **JavaScript**: objects, template literals, booleans
+- **Tailwind**: `fixed`, `inset-0`, `z-40` / `z-50`, `bg-yellow-400`
+- **Framer Motion**: `layoutId`, `AnimatePresence`, `initial`, `animate`, `exit`, `transition`
 
----
+## Things to understand
+
+### Does `layoutId` decide which card appears?
+
+No. `isExpanded` decides that. `layoutId` only makes the change look like one card growing.
+
+### Why are there two card elements?
+
+Because there are two UI states. We're not stretching one element, we're swapping two and animating between them.
+
+### Why did the close text become an X icon?
+
+Detail views conventionally close with a small corner icon. Since the button has no visible text, `aria-label` is what tells assistive technology what it does.
 
 ## Try changing it
 
 1. Remove `layoutId` from both cards.
-    
-2. Keep `layoutId` on the cards but remove it from the title.
-    
+2. Keep it on the cards but remove it from the title.
 3. Remove `AnimatePresence`.
-    
-4. Remove the detail fade animation.
-    
-5. Change the card's expanded width.
-    
-6. Add an icon to the small card & connect it with `layoutId`.
-    
-7. Add a second card & make each card expand independently.
-    
+4. Change how wide the expanded card is.
+5. Add a second card that expands independently. This forces you to think about **state per item**.
 
-The last one is especially useful because it forces you to think about **state per item**.
-
----
-
-## What this component teaches
-
-The bigger React pattern is:
-
-```text
-UI state
-   ↓
-conditional rendering
-   ↓
-different UI
-```
-
-The bigger Framer Motion pattern is:
-
-```text
-two related layouts
-   ↓
-same layoutId
-   ↓
-visual transition between them
-```
-
-These are two separate concepts working together.
-
----
-
-## Next concepts
+## Read next
 
 - [Conditional rendering](https://react.dev/learn/conditional-rendering)
-- [Shared layout animations (layoutId)](https://motion.dev/docs/react-layout-animations)
+- [Shared layout animations](https://motion.dev/docs/react-layout-animations)
 - [AnimatePresence](https://motion.dev/docs/react-animate-presence)
 - [ARIA labels](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Attributes/aria-label)
-- [Color contrast basics](https://developer.mozilla.org/en-US/docs/Web/Accessibility/Understanding_WCAG/Perceivable/Color_contrast)

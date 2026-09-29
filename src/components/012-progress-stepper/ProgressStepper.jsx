@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 
 const steps = ["Account", "Profile", "Payment", "Confirm"];
 
-export default function ProgressStepper({ autoPlay = false }) {
+export default function ProgressStepper({ autoPlay = false, onStateChange }) {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
@@ -19,6 +19,10 @@ export default function ProgressStepper({ autoPlay = false }) {
     }, 700);
     return () => clearInterval(interval);
   }, [autoPlay]);
+
+  useEffect(() => {
+    onStateChange?.({ current });
+  }, [current, onStateChange]);
 
   return (
     <div className="w-96">

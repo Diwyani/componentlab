@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function ToastDemo() {
+export default function ToastDemo({ onStateChange }) {
   const [toasts, setToasts] = useState([]);
 
   function addToast() {
@@ -12,6 +12,10 @@ export default function ToastDemo() {
       setToasts((prev) => prev.filter((toast) => toast.id !== id));
     }, 3000);
   }
+
+  useEffect(() => {
+    onStateChange?.({ "toasts.length": toasts.length });
+  }, [toasts, onStateChange]);
 
   return (
     <div className="flex flex-col items-center gap-6">

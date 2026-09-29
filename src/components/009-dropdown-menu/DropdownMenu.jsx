@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const items = ["Profile", "Settings", "Billing", "Sign out"];
@@ -28,8 +28,12 @@ const itemVariants = {
   visible: { opacity: 1, x: 0 },
 };
 
-export default function DropdownMenu() {
+export default function DropdownMenu({ onStateChange }) {
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    onStateChange?.({ isOpen });
+  }, [isOpen, onStateChange]);
 
   return (
     <div className="relative inline-block">

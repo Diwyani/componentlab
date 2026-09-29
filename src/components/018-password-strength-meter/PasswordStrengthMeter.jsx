@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 
@@ -17,11 +17,15 @@ const LEVELS = [
   { label: "Strong", color: "bg-green-500" },
 ];
 
-export default function PasswordStrengthMeter() {
+export default function PasswordStrengthMeter({ onStateChange }) {
   const [value, setValue] = useState("");
 
   const score = useMemo(() => RULES.filter((rule) => rule.test(value)).length, [value]);
   const level = value ? LEVELS[score] : null;
+
+  useEffect(() => {
+    onStateChange?.({ value });
+  }, [value, onStateChange]);
 
   return (
     <div className="w-72">

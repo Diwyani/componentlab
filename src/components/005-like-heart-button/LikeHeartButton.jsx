@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
 
-export default function LikeButton({ autoPlay = false }) {
+export default function LikeButton({ autoPlay = false, onStateChange }) {
   const [isLiked, setIsLiked] = useState(false);
 
   useEffect(() => {
@@ -10,6 +10,10 @@ export default function LikeButton({ autoPlay = false }) {
     const timer = setTimeout(() => setIsLiked(true), 300);
     return () => clearTimeout(timer);
   }, [autoPlay]);
+
+  useEffect(() => {
+    onStateChange?.({ isLiked });
+  }, [isLiked, onStateChange]);
 
   return (
     <button

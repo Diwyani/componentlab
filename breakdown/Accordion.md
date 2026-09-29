@@ -1,176 +1,46 @@
-An accordion is a list of items where clicking an item reveals or hides its content.
+## The idea
 
-The goal isn't just to build an accordion. The goal is to understand how React can use **one piece of state to control a collection of items**.
+A list of questions where clicking one reveals its answer, and clicking it again hides it. The goal is to see how **one piece of state can control a whole collection of items**.
 
----
-
-## What are we building?
+Instead of a boolean for every item, we remember one number: which item is open.
 
 ```text
-What is React?
-────────────────────────
-
-How does state work?
-────────────────────────
-
-What is Framer Motion?
-────────────────────────
+openIndex = null  →  click item 1  →  setOpenIndex(1)  →  re-render  →  item 1 shows its answer
 ```
 
-When the user clicks an item:
+## How it works
 
-```text
-What is React?
-────────────────────────
-React is a library...
-────────────────────────
+### 01 The data
 
-How does state work?
-────────────────────────
+The questions live in an array of [objects](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object).
 
-What is Framer Motion?
-────────────────────────
-```
-
-Clicking the same item again closes it.
-
----
-
-## The mental model
-
-The first question is:
-
-> How do we know which item is open?
-
-We could store a boolean for every item:
-
-```text
-item 1 → true
-item 2 → false
-item 3 → false
-```
-
-But there's a simpler way.
-
-We store:
-
-```text
-openIndex
-```
-
-For example:
-
-```text
-openIndex = 0
-```
-
-means:
-
-> item 0 is open.
-
-Or:
-
-```text
-openIndex = 2
-```
-
-means:
-
-> item 2 is open.
-
-And:
-
-```text
-openIndex = null
-```
-
-means:
-
-> nothing is open.
-
----
-
-## The complete flow
-
-```text
-openIndex = null
-       ↓
-nothing is open
-       ↓
-user clicks item 1
-       ↓
-setOpenIndex(1)
-       ↓
-openIndex = 1
-       ↓
-React re-renders
-       ↓
-item 1 shows its answer
-```
-
-Click item 1 again:
-
-```text
-item 1 is already open
-       ↓
-setOpenIndex(null)
-       ↓
-nothing is open
-```
-
----
-
-## Step 1 — the data
-
-We have an array of FAQ objects:
+- Each object has a `question` and an `answer`.
+- Keeping content as data means the UI can be built from it.
 
 ```jsx
 const faqs = [
-  {
-    question: "What is React?",
-    answer: "React is a JavaScript library for building interfaces.",
-  },
-  {
-    question: "What is state?",
-    answer: "State is information that can change over time.",
-  },
+  { question: "What is Framer Motion?", answer: "A React animation library..." },
+  { question: "What is GSAP?", answer: "A JavaScript animation library..." },
 ];
 ```
 
-Each item contains:
+### 02 Remember which one is open
 
-```text
-question
-answer
-```
+One state value holds the position of the open item.
 
-This is a JavaScript [object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object).
-
----
-
-## Step 2 — the state
+- `openIndex = 0` means the first item is open, `2` means the third.
+- It starts as `null`, which means **nothing is open**.
 
 ```jsx
 const [openIndex, setOpenIndex] = useState(null);
 ```
 
-Initially:
+### 03 Build each item with .map()
 
-```text
-openIndex = null
-```
+[`.map()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map) gives us each item and its position.
 
-Nothing is open.
-
-Why `null`?
-
-Because `null` can represent:
-
-> there is currently no selected item.
-
----
-
-## Step 3 — `.map()` creates each FAQ
+- `faq` is the item, `index` is where it sits: `0`, `1`, `2`.
+- One piece of UI is created for every FAQ.
 
 ```jsx
 {faqs.map((faq, index) => (
@@ -178,534 +48,92 @@ Because `null` can represent:
 ))}
 ```
 
-We get both:
+### 04 Each item asks "am I open?"
 
-```text
-faq
-index
-```
+We calculate `isOpen` instead of storing it.
 
-For example:
-
-```text
-faq = first question
-index = 0
-```
-
-Then:
-
-```text
-faq = second question
-index = 1
-```
-
-Then:
-
-```text
-faq = third question
-index = 2
-```
-
-The [`.map()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map) creates one piece of UI for every FAQ.
-
----
-
-## Step 4 — figure out whether this item is open
-
-Inside `.map()`:
+- `openIndex === index` is `true` for exactly one item, `false` for the rest.
+- This is **derived data**: worked out from state, not kept as extra state.
 
 ```jsx
 const isOpen = openIndex === index;
 ```
 
-This is **derived information**.
+### 05 Clicking opens or closes
 
-We're not storing:
+A [ternary](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_operator) decides what the click does.
 
-```text
-isOpen
-```
-
-in state.
-
-We're calculating it.
-
-For example:
-
-```text
-openIndex = 1
-index = 0
-
-1 === 0
-   ↓
-false
-```
-
-For the second item:
-
-```text
-openIndex = 1
-index = 1
-
-1 === 1
-   ↓
-true
-```
-
-So:
-
-```text
-FAQ 0 → false
-FAQ 1 → true
-FAQ 2 → false
-```
-
-Only one item is open.
-
----
-
-## Step 5 — clicking an item
+- Already open? Set it to `null` to close it.
+- Closed? Set it to this item's `index` to open it (and close any other).
 
 ```jsx
 onClick={() => setOpenIndex(isOpen ? null : index)}
 ```
 
-This uses a [ternary operator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_operator).
+### 06 Show the answer only when open
 
-Read it as:
+`&&` renders the answer only when `isOpen` is true. This is [conditional rendering](https://react.dev/learn/conditional-rendering).
 
-> if this item is already open, close it. Otherwise, open it.
-
-So:
-
-```text
-isOpen = true
-    ↓
-setOpenIndex(null)
-```
-
-But:
-
-```text
-isOpen = false
-    ↓
-setOpenIndex(index)
-```
-
-This gives us the toggle behaviour.
-
----
-
-## Step 6 — conditionally render the answer
+- `AnimatePresence` lets the answer animate out before React removes it.
+- Height goes from `0` to `"auto"`, so the answer slides open.
 
 ```jsx
-{isOpen && (
-  <div>
-    {faq.answer}
-  </div>
-)}
+<AnimatePresence initial={false}>
+  {isOpen && (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: "auto", opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+    >
+      <p>{faq.answer}</p>
+    </motion.div>
+  )}
+</AnimatePresence>
 ```
 
-This uses `&&` for [conditional rendering](https://react.dev/learn/conditional-rendering).
+### 07 The plus becomes a cross
 
-Read it as:
+The icon reads the same `isOpen` value, so it needs no state of its own.
 
-> if this item is open, render the answer.
-
-So:
-
-```text
-isOpen = true
-    ↓
-answer exists
-
-
-isOpen = false
-    ↓
-answer doesn't exist
-```
-
----
-
-## Step 7 — animate the answer
-
-Without animation, the answer would simply appear/disappear.
-
-We use:
+- Closed: `0°`, a plus. Open: `45°`, which looks like an `×`.
 
 ```jsx
-<AnimatePresence>
+<motion.span animate={{ rotate: isOpen ? 45 : 0 }}>+</motion.span>
 ```
 
-because the answer is conditionally rendered.
+## What belongs to what
 
-When:
-
-```text
-isOpen = true
-```
-
-the answer enters.
-
-When:
-
-```text
-isOpen = false
-```
-
-the answer is removed.
-
-`AnimatePresence` allows Framer Motion to play the exit animation before the element is removed.
-
----
-
-## Step 8 — the plus icon
-
-The icon can also use the same `isOpen` value:
-
-```jsx
-animate={{
-  rotate: isOpen ? 45 : 0
-}}
-```
-
-So:
-
-```text
-closed
-rotate = 0°
-
-
-open
-rotate = 45°
-```
-
-The plus sign therefore becomes visually closer to an `×`.
-
-We don't need another state for the icon.
-
-Why?
-
-Because the icon's state can be derived from:
-
-```text
-isOpen
-```
-
----
-
-## What belongs to what?
-
-### React
-
-- `useState`
-    
-- state
-    
-- `.map()` rendering
-    
-- conditional rendering
-    
-- re-render
-    
-
-### JavaScript
-
-- arrays
-    
-- objects
-    
-- `.map()`
-    
-- `index`
-    
-- `===`
-    
-- ternary
-    
-- `null`
-    
-
-### Framer Motion
-
-- `motion`
-    
-- `AnimatePresence`
-    
-- `initial`
-    
-- `animate`
-    
-- `exit`
-    
-
-### Tailwind
-
-- spacing
-    
-- borders
-    
-- layout
-    
-- typography
-    
-- overflow
-    
-
----
-
-## The code
-
-```jsx
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-
-const faqs = [
-  {
-    question: "What is React?",
-    answer: "React is a JavaScript library for building user interfaces.",
-  },
-  {
-    question: "What is state?",
-    answer: "State is information that can change over time.",
-  },
-  {
-    question: "What is Framer Motion?",
-    answer: "Framer Motion is a library for adding animations and interactions to React interfaces.",
-  },
-];
-
-export default function Accordion() {
-  const [openIndex, setOpenIndex] = useState(null);
-
-  return (
-    <div className="w-96">
-      {faqs.map((faq, index) => {
-        const isOpen = openIndex === index;
-
-        return (
-          <div
-            key={faq.question}
-            className="border-b border-neutral-800"
-          >
-            <button
-              onClick={() =>
-                setOpenIndex(isOpen ? null : index)
-              }
-              className="flex w-full items-center justify-between py-4 text-left"
-            >
-              <span className="text-sm font-medium text-white">
-                {faq.question}
-              </span>
-
-              <motion.span
-                animate={{ rotate: isOpen ? 45 : 0 }}
-                className="text-xl text-neutral-400"
-              >
-                +
-              </motion.span>
-            </button>
-
-            <AnimatePresence initial={false}>
-              {isOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
-                >
-                  <p className="pb-4 text-sm text-neutral-400">
-                    {faq.answer}
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-```
-
----
+- **React**: `useState`, `.map()` rendering, conditional rendering, re-render
+- **JavaScript**: arrays, objects, `index`, `===`, ternary, `null`
+- **Tailwind**: spacing, rounded corners, layout, typography, `overflow-hidden`
+- **Framer Motion**: `motion`, `AnimatePresence`, `initial`, `animate`, `exit`
 
 ## Things to understand
 
 ### Why `openIndex` instead of `isOpen`?
 
-Because there are multiple FAQ items.
-
-A single:
-
-```text
-isOpen = true
-```
-
-wouldn't tell us **which** FAQ is open.
-
-But:
-
-```text
-openIndex = 2
-```
-
-does.
-
----
-
-### Why is `isOpen` inside `.map()`?
-
-Because each FAQ needs to ask:
-
-> Am I the open one?
-
-For each item:
-
-```jsx
-const isOpen = openIndex === index;
-```
-
-So the same logic works for every item.
-
----
+There are several items. A single `isOpen = true` wouldn't tell us **which** one is open. `openIndex = 2` does.
 
 ### Is `isOpen` state?
 
-No.
-
-It's **derived data**.
-
-The actual state is:
-
-```text
-openIndex
-```
-
-We calculate:
-
-```text
-isOpen
-```
-
-from it.
-
-This is an important React concept:
-
-> Don't store information that you can calculate from existing state.
-
----
-
-### What does `&&` mean here?
-
-```jsx
-{isOpen && <Answer />}
-```
-
-It means:
-
-```text
-isOpen = true
-     ↓
-render Answer
-
-
-isOpen = false
-     ↓
-render nothing
-```
-
-It's a common React pattern for [conditional rendering](https://react.dev/learn/conditional-rendering).
-
----
+No. It's derived from `openIndex`. An important React rule: don't store information you can calculate from existing state.
 
 ### What does `index` mean?
 
-When `.map()` goes through the array:
-
-```text
-first item  → index 0
-second item → index 1
-third item  → index 2
-```
-
-So `index` gives each item a position.
-
----
+When `.map()` walks the array, the first item gets `0`, the second `1`, the third `2`. It's each item's position.
 
 ## Try changing it
 
-1. Make multiple items stay open at the same time.
-    
-2. Add an arrow instead of `+`.
-    
-3. Rotate the arrow.
-    
-4. Change the animation.
-    
-5. Add a second level of nested questions.
-    
-6. Move the FAQ data into a separate file.
-    
-7. Turn the accordion into a reusable component that receives `faqs` as a prop.
-    
-8. Build a controlled version where the parent decides which item is open.
-    
+1. Let several items stay open at once. Is one `openIndex` still enough? (No, and working out why is the lesson: choosing the right **shape** of state.)
+2. Swap `+` for an arrow and rotate it.
+3. Change the animation timing.
+4. Move the FAQ data into its own file.
+5. Make it a reusable component that receives `faqs` as a prop.
 
-The first exercise is particularly useful.
-
-It forces you to ask:
-
-> If more than one item can be open, is one `openIndex` still enough?
-
-The answer is no.
-
-That is how you start thinking about **choosing the right shape of state** instead of memorising patterns.
-
----
-
-## What this component teaches
-
-The bigger pattern is:
-
-```text
-collection of data
-       ↓
-.map()
-       ↓
-each item gets an index
-       ↓
-compare index with state
-       ↓
-derive item state
-       ↓
-conditionally render UI
-```
-
-And the deeper React idea is:
-
-```text
-state
- ↓
-derived information
- ↓
-UI
-```
-
----
-
-## Next concepts
+## Read next
 
 - [Rendering lists](https://react.dev/learn/rendering-lists)
-    
 - [Conditional rendering](https://react.dev/learn/conditional-rendering)
-    
-- [React state](https://react.dev/learn/state-a-components-memory)
-    
-- [JavaScript arrays](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)
-    
 - [JavaScript objects](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)
-    
-- [JavaScript `map()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map)
-    
-- [JavaScript ternary operator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_operator)
+- [JavaScript map()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map)
+- [Ternary operator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_operator)

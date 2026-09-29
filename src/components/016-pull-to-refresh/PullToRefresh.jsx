@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { RefreshCw } from "lucide-react";
 
@@ -11,7 +11,7 @@ const items = [
 
 const THRESHOLD = 70;
 
-export default function PullToRefresh() {
+export default function PullToRefresh({ onStateChange }) {
   const [pullProgress, setPullProgress] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -31,6 +31,10 @@ export default function PullToRefresh() {
       setPullProgress(0);
     }
   }
+
+  useEffect(() => {
+    onStateChange?.({ pullProgress: Number(pullProgress.toFixed(2)), isRefreshing });
+  }, [pullProgress, isRefreshing, onStateChange]);
 
   return (
     <div className="relative h-80 w-72 overflow-hidden rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">

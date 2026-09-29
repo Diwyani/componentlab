@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-export default function ToggleSwitch({ autoPlay = false }) {
+export default function ToggleSwitch({ autoPlay = false, onStateChange }) {
   const [isOn, setIsOn] = useState(false);
 
   useEffect(() => {
@@ -9,6 +9,10 @@ export default function ToggleSwitch({ autoPlay = false }) {
     const timer = setTimeout(() => setIsOn(true), 300);
     return () => clearTimeout(timer);
   }, [autoPlay]);
+
+  useEffect(() => {
+    onStateChange?.({ isOn });
+  }, [isOn, onStateChange]);
 
   return (
     <div

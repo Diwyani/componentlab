@@ -1,593 +1,110 @@
+## The idea
 
-A component that shows where a user currently is in a multi-step process.
-
-For example
- 
-```text
-Account → Profile → Payment → Confirm
-```
-
-This component teaches an important React idea:
+A row of steps (Account, Profile, Payment, Confirm) showing where you are in a process, with Back and Next buttons. The lesson:
 
 > **One piece of state can control many parts of the UI.**
 
----
-
-## What are we building?
-
-A stepper with:
-
-- multiple steps
-- a current step
-- completed steps
-- progress lines
-- Back & Next buttons
-- disabled states
-- animated transitions
-
----
-
-## Mental model
+Every circle, tick, line and button is worked out from one number: `current`.
 
 ```text
-             STEPPER
-                │
-                ▼
-           current = 0
-                │
-                ▼
-          React renders
-                │
-                ▼
-      every visual state is
-       calculated from current
-                │
-          user clicks Next
-                │
-                ▼
-        setCurrent(c + 1)
-                │
-                ▼
-           current = 1
-                │
-                ▼
-          React re-renders
-                │
-       ┌────────┼────────┐
-       ▼        ▼        ▼
-   step 1    step 2    line
-   done      current    fills
+current = 0  →  click Next  →  setCurrent(c + 1)  →  re-render  →  step 1 ticked, line fills, step 2 active
 ```
 
-The key idea is:
+## How it works
 
-```text
-current
-  ↓
-everything else is derived
-```
+### 01 One number for the whole stepper
 
----
+`current` is the index of the step you're on.
 
-## The code
+- `0` is Account, `3` is Confirm.
+- Nothing else about the stepper is stored anywhere.
 
 ```jsx
-import { useState } from "react";
-import { motion } from "framer-motion";
+const steps = ["Account", "Profile", "Payment", "Confirm"];
 
-const steps = [
-  "Account",
-  "Profile",
-  "Payment",
-  "Confirm",
-];
-
-export default function ProgressStepper() {
-  const [current, setCurrent] = useState(0);
-
-  return (
-    <div className="w-96">
-      <div className="flex items-center">
-        {steps.map((step, index) => (
-          <div
-            key={step}
-            className="flex flex-1 items-center last:flex-none"
-          >
-            <div className="flex flex-col items-center gap-2">
-              <motion.div
-                animate={{
-                  backgroundColor:
-                    index <= current ? "#ffffff" : "#262626",
-                  color:
-                    index <= current ? "#000000" : "#737373",
-                }}
-                transition={{ duration: 0.25 }}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium"
-              >
-                {index < current ? "✓" : index + 1}
-              </motion.div>
-
-              <span className="text-xs text-neutral-400">
-                {step}
-              </span>
-            </div>
-
-            {index < steps.length - 1 && (
-              <div className="relative mx-2 h-0.5 flex-1 -translate-y-3 bg-neutral-800">
-                <motion.div
-                  animate={{
-                    width: index < current ? "100%" : "0%",
-                  }}
-                  transition={{ duration: 0.3 }}
-                  className="absolute inset-y-0 left-0 bg-white"
-                />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-8 flex justify-center gap-3">
-        <button
-          onClick={() =>
-            setCurrent((c) => Math.max(0, c - 1))
-          }
-          disabled={current === 0}
-          className="rounded-lg bg-neutral-800 px-4 py-2 text-sm text-neutral-200 disabled:opacity-40"
-        >
-          Back
-        </button>
-
-        <button
-          onClick={() =>
-            setCurrent((c) =>
-              Math.min(steps.length - 1, c + 1)
-            )
-          }
-          disabled={current === steps.length - 1}
-          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black disabled:opacity-40"
-        >
-          Next
-        </button>
-      </div>
-    </div>
-  );
-}
-```
-
----
-
-## 1. The steps
-
-```jsx
-const steps = [
-  "Account",
-  "Profile",
-  "Payment",
-  "Confirm",
-];
-```
-
-This is just JavaScript data.
-
-The array gives us four steps.
-
-Because we're using `.map()`, we don't need to manually write each step.
-
----
-
-## 2. The current step
-
-```jsx
 const [current, setCurrent] = useState(0);
 ```
 
-The number represents the current position.
+### 02 Each step compares itself to current
 
-```text
-0 → Account
-1 → Profile
-2 → Payment
-3 → Confirm
-```
+`.map()` gives every step its `index`, and comparisons decide how it looks.
 
-So initially:
-
-```text
-current = 0
-```
-
-means Account is the current step.
-
----
-
-## 3. One state controls everything
-
-This is the most important concept.
-
-We don't store:
-
-```text
-accountIsComplete
-profileIsComplete
-paymentIsComplete
-confirmIsCurrent
-```
-
-Instead we store only:
-
-```text
-current
-```
-
-Then we calculate everything else.
-
-For example:
+- `index < current`: already done, shows a tick.
+- `index <= current`: done or current, gets the dark filled circle.
+- Otherwise: still ahead, grey with its number.
 
 ```jsx
-index < current
-```
+className={index <= current ? "bg-neutral-900 text-white" : "bg-neutral-200"}
 
-means:
-
-> This step has already been completed.
-
-And:
-
-```jsx
-index <= current
-```
-
-means:
-
-> This step has been reached.
-
----
-
-## 4. Understanding `index`
-
-`.map()` gives us both:
-
-```jsx
-steps.map((step, index) => ...)
-```
-
-For our array:
-
-```text
-Account   → index 0
-Profile   → index 1
-Payment   → index 2
-Confirm   → index 3
-```
-
-So we can compare `index` with `current`.
-
----
-
-## 5. Completed vs current vs upcoming
-
-Suppose:
-
-```text
-current = 2
-```
-
-Then:
-
-```text
-index 0 → completed
-index 1 → completed
-index 2 → current
-index 3 → upcoming
-```
-
-Because:
-
-```text
-index < current
-```
-
-is true for 0 & 1.
-
-But:
-
-```text
-index === current
-```
-
-is true for 2.
-
----
-
-## 6. Why `index <= current`?
-
-For the circle's visual styling:
-
-```jsx
-index <= current
-```
-
-We want the current step to look active too.
-
-So if:
-
-```text
-current = 2
-```
-
-then:
-
-```text
-0 <= 2 → true
-1 <= 2 → true
-2 <= 2 → true
-3 <= 2 → false
-```
-
-Therefore the first three circles get the active appearance.
-
----
-
-## 7. Why `index < current` for the checkmark?
-
-For the text inside the circle:
-
-```jsx
 {index < current ? "✓" : index + 1}
 ```
 
-If the step is before the current step:
+### 03 The lines fill in behind you
 
-```text
-show ✓
-```
+Between each pair of steps is a line whose fill width is also derived.
 
-Otherwise:
-
-```text
-show step number
-```
-
-So:
-
-```text
-✓   ✓   3   4
-```
-
----
-
-## 8. The connector line
-
-We don't want a line after the final step.
-
-So:
+- The line after step `index` is full once you've passed that step.
+- Framer Motion animates the width, so the line grows instead of snapping.
 
 ```jsx
-index < steps.length - 1
+<motion.div
+  animate={{ width: index < current ? "100%" : "0%" }}
+  transition={{ duration: 0.3 }}
+/>
 ```
 
-Our array has length 4.
+### 04 Back and Next can't go too far
 
-Therefore:
+The buttons change `current`, clamped so it never leaves the list.
 
-```text
-steps.length - 1
-= 4 - 1
-= 3
-```
-
-The condition becomes:
-
-```text
-index < 3
-```
-
-So lines appear after:
-
-```text
-0
-1
-2
-```
-
-but not after:
-
-```text
-3
-```
-
----
-
-## 9. Filling the connector
+- `Math.max(0, c - 1)` stops Back at the first step.
+- `Math.min(steps.length - 1, c + 1)` stops Next at the last.
 
 ```jsx
-width: index < current ? "100%" : "0%"
+onClick={() => setCurrent((c) => Math.max(0, c - 1))}
+onClick={() => setCurrent((c) => Math.min(steps.length - 1, c + 1))}
 ```
 
-Suppose:
+### 05 Disabled states are derived too
 
-```text
-current = 2
-```
+Each button knows when it's useless and disables itself.
 
-Then:
-
-```text
-line after step 0 → 100%
-line after step 1 → 100%
-line after step 2 → 0%
-```
-
-So the progress visually matches the current state.
-
----
-
-## 10. The Next button
+- Back is disabled on the first step, Next on the last.
+- `disabled:opacity-40` from Tailwind fades them out.
 
 ```jsx
-setCurrent((c) =>
-  Math.min(steps.length - 1, c + 1)
-)
+<button disabled={current === 0}>Back</button>
+<button disabled={current === steps.length - 1}>Next</button>
 ```
 
-We want:
+## What belongs to what
 
-```text
-current + 1
-```
-
-but we don't want to go past the final step.
-
-`Math.min()` gives us the smaller value.
-
-So:
-
-```text
-Math.min(3, 2 + 1)
-→ 3
-```
-
-But:
-
-```text
-Math.min(3, 3 + 1)
-→ 3
-```
-
-So the state can never become 4.
-
----
-
-## 11. The Back button
-
-Same idea:
-
-```jsx
-Math.max(0, c - 1)
-```
-
-We don't want the value to become negative.
-
-So:
-
-```text
-Math.max(0, 0 - 1)
-→ 0
-```
-
-The state stays within:
-
-```text
-0 → 3
-```
-
----
-
-## 12. Disabled buttons
-
-```jsx
-disabled={current === 0}
-```
-
-The Back button is disabled when we're at the first step.
-
-And:
-
-```jsx
-disabled={current === steps.length - 1}
-```
-
-disables Next at the final step.
-
-Again, these are derived from the same `current` state.
-
----
-
-## What belongs to what?
-
-|Concept|Technology|
-|---|---|
-|`current`|React|
-|`useState`|React|
-|`steps`|JavaScript|
-|`.map()`|JavaScript|
-|`index`|JavaScript|
-|`Math.min()`|JavaScript|
-|`Math.max()`|JavaScript|
-|`animate`|Framer Motion|
-|`flex`, `gap`, `w-96`|Tailwind|
-|`disabled`|HTML|
-
----
+- **React**: `useState`, functional updates, derived UI, `.map()` with `index`
+- **JavaScript**: arrays, `<`, `<=`, `===`, `Math.min()`, `Math.max()`
+- **Tailwind**: `flex-1`, `transition-colors`, `disabled:opacity-40`
+- **Framer Motion**: `motion.div`, animating `width`
 
 ## Things to understand
-- array `.map()`
-- index
-- derived UI
-- comparison operators
-- `<`
-- `<=`
-- `===`
-- `Math.min()`
-- `Math.max()`
-- disabled states
-- one source of truth
 
----
+### Why not store "completed steps" separately?
+
+If you know the current step, you already know every step before it is done. A second list would just be something else to keep in sync.
+
+### What can be derived from `current`?
+
+Which steps are done, which is active, which lines are filled, whether Back or Next is disabled, and what content to show. That's **derived UI**.
 
 ## Try changing it
 
 1. Add a fifth step.
-2. Change the labels.
-3. Add a "Finish" button on the final step.
-4. Make clicking a completed step go back to that step.
-5. Add different content below the stepper based on `current`.
-6. Make the stepper horizontal on desktop & vertical on mobile.
-7. Try replacing the number with an icon.
+2. Show a "Finish" button on the last step.
+3. Let clicking a completed step jump back to it.
+4. Show different content below the stepper based on `current`.
+5. Replace the numbers with icons.
 
----
+## Read next
 
-## What this component teaches
-
-This is one of the most important patterns you've learned so far:
-
-```text
-ONE PIECE OF STATE
-       ↓
-DERIVED UI
-       ↓
-many visual changes
-```
-
-You don't need separate state for every visual detail.
-
-If the current step is known, you can calculate:
-
-- which steps are complete
-    
-- which step is current
-    
-- which lines are filled
-    
-- whether Back is disabled
-    
-- whether Next is disabled
-    
-- what content should be shown
-    
-
-That's **derived UI**.
-
----
-
-## Next concepts
-
-This leads naturally into:
-
-- derived state
-- controlled components
-- lifting state up
-- props
-- forms
-- reusable component APIs
+- [Choosing the state structure](https://react.dev/learn/choosing-the-state-structure)
+- [Rendering lists](https://react.dev/learn/rendering-lists)
+- [Math.min()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/min)
+- [Math.max()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/max)

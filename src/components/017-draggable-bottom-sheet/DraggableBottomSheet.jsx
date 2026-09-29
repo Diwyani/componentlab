@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
 const SNAPS = { open: 0, half: 170, closed: 310 };
 const ORDER = ["open", "half", "closed"];
 
-export default function DraggableBottomSheet() {
+export default function DraggableBottomSheet({ onStateChange }) {
   const [snap, setSnap] = useState("half");
 
   function handleDragEnd(_, info) {
@@ -21,6 +21,10 @@ export default function DraggableBottomSheet() {
     }
     setSnap(closest);
   }
+
+  useEffect(() => {
+    onStateChange?.({ snap });
+  }, [snap, onStateChange]);
 
   return (
     <div className="relative h-96 w-72 overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-950">
