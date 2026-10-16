@@ -98,7 +98,7 @@ When `isExpanded` turns false, React wants to remove the big card immediately. `
 
 - **React**: `useState`, conditional rendering, `&&`, `!`, re-render
 - **JavaScript**: objects, template literals, booleans
-- **Tailwind**: `fixed`, `inset-0`, `z-40` / `z-50`, `bg-yellow-400`
+- **Tailwind**: `fixed`, `inset-0`, `z-40` / `z-50`, `bg-emerald-500`
 - **Framer Motion**: `layoutId`, `AnimatePresence`, `initial`, `animate`, `exit`, `transition`
 
 ## Things to understand

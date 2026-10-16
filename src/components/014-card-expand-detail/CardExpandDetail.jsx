@@ -50,22 +50,22 @@ export default function CardExpandDetail({ autoPlay = false, onStateChange }) {
             />
 
             <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-              <motion.div layoutId={card.id} className="relative w-80 rounded-xl bg-yellow-400 p-6 text-left">
+              <motion.div layoutId={card.id} className="relative w-80 rounded-xl bg-emerald-500 p-6 text-left">
                 <button
                   onClick={() => setIsExpanded(false)}
                   aria-label="Close"
-                  className="absolute right-4 top-4 rounded-full p-1 text-neutral-900/60 transition-colors hover:bg-black/10 hover:text-neutral-900"
+                  className="absolute right-4 top-4 rounded-full p-1 text-white/70 transition-colors hover:bg-white/15 hover:text-white"
                 >
                   <X className="h-4 w-4" />
                 </button>
-                <motion.h3 layoutId={`${card.id}-title`} className="text-base font-medium text-neutral-900">
+                <motion.h3 layoutId={`${card.id}-title`} className="text-base font-medium text-white">
                   {card.title}
                 </motion.h3>
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.15 }}
-                  className="mt-3 pr-6 text-sm leading-relaxed text-neutral-800"
+                  className="mt-3 pr-6 text-sm leading-relaxed text-white/90"
                 >
                   {card.detail}
                 </motion.p>

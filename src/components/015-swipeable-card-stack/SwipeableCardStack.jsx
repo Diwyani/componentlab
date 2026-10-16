@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 
 const cards = [
   { id: 1, title: "Mountain Hike", color: "bg-emerald-500" },
@@ -8,15 +8,52 @@ const cards = [
   { id: 4, title: "Ocean Breeze", color: "bg-sky-500" },
 ];
 
+const exitVariants = {
+  exit: (direction) => ({
+    x: direction * 400,
+    opacity: 0,
+    rotate: direction * 25,
+    transition: { duration: 0.3 },
+  }),
+};
+
+function SwipeCard({ card, position, onDragEnd }) {
+  const isTop = position === 0;
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 200], [-18, 18]);
+  const opacity = useTransform(x, [-260, -120, 0, 120, 260], [0.4, 1, 1, 1, 0.4]);
+
+  return (
+    <motion.div
+      className={`absolute inset-0 flex items-end rounded-2xl p-5 text-white shadow-lg ${card.color} ${
+        isTop ? "cursor-grab active:cursor-grabbing" : ""
+      }`}
+      style={{ zIndex: 10 - position, x, rotate, opacity }}
+      initial={false}
+      animate={{ scale: 1 - position * 0.05, y: position * 10 }}
+      variants={exitVariants}
+      exit="exit"
+      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      drag={isTop}
+      dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+      dragElastic={1}
+      whileDrag={{ scale: 1.03 }}
+      onDragEnd={(_, info) => onDragEnd(card.id, info)}
+    >
+      <h3 className="text-lg font-semibold">{card.title}</h3>
+    </motion.div>
+  );
+}
+
 export default function SwipeableCardStack({ onStateChange }) {
   const [stack, setStack] = useState(cards);
-  const [exitDirections, setExitDirections] = useState({});
+  const [exitDirection, setExitDirection] = useState(1);
 
   function handleDragEnd(id, info) {
     const passedThreshold = Math.abs(info.offset.x) > 100 || Math.abs(info.velocity.x) > 500;
     if (!passedThreshold) return;
 
-    setExitDirections((prev) => ({ ...prev, [id]: info.offset.x > 0 ? 1 : -1 }));
+    setExitDirection(info.offset.x > 0 ? 1 : -1);
     setStack((prev) => prev.filter((card) => card.id !== id));
   }
 
@@ -28,7 +65,7 @@ export default function SwipeableCardStack({ onStateChange }) {
 
   return (
     <div className="relative h-72 w-64">
-      <AnimatePresence>
+      <AnimatePresence custom={exitDirection}>
         {visible.length === 0 ? (
           <motion.div
             key="empty"
@@ -48,30 +85,14 @@ export default function SwipeableCardStack({ onStateChange }) {
           visible
             .slice()
             .reverse()
-            .map((card, i) => {
-              const position = visible.length - 1 - i;
-              const isTop = position === 0
-              const direction = exitDirections[card.id] ?? 1
-
-              return (
-                <motion.div
-                  key={card.id}
-                  className={`absolute inset-0 flex items-end rounded-2xl p-5 text-white shadow-lg ${card.color}`}
-                  style={{ zIndex: 10 - position }}
-                  initial={false}
-                  animate={{ scale: 1 - position * 0.05, y: position * 10 }}
-                  exit={{ x: direction * 300, opacity: 0, rotate: direction * 15 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                  drag={isTop ? "x" : false}
-                  dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={0.9}
-                  whileDrag={{ rotate: 8, cursor: "grabbing" }}
-                  onDragEnd={(_, info) => handleDragEnd(card.id, info)}
-                >
-                  <h3 className="text-lg font-semibold">{card.title}</h3>
-                </motion.div>
-              )
-            })
+            .map((card, i) => (
+              <SwipeCard
+                key={card.id}
+                card={card}
+                position={visible.length - 1 - i}
+                onDragEnd={handleDragEnd}
+              />
+            ))
         )}
       </AnimatePresence>
     </div>
